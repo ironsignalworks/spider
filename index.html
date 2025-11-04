@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -6,11 +6,16 @@
 <title>SPIDER STRIKE</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+  @font-face{
+    font-family:'Still Time';
+    src:url('still_time/Still Time.otf') format('opentype');
+    font-display:swap;
+  }
   
   :root{
-    --bg:#0c0602; --ink:#ffeedd; --muted:#ffcf99;
+    --bg:#0c0602; --ink:#fff8f0; --muted:#ffd9aa;
     --neon:#ff8c00; --ok:#ff8c00; --warn:#ffb84d; --bad:#cc5500;
-    --grid:#0d002a;
+    --grid:#2a1100;
   }
   *{box-sizing:border-box}
   
@@ -48,8 +53,9 @@
   header{justify-content:space-between;user-select:none;animation:flicker 0.15s infinite;}
   
   .brand{
-    letter-spacing:.15em;font-size:1.4em;color:var(--neon);
+    letter-spacing:.08em;font-size:1.6em;color:var(--neon);
     text-shadow:0 0 10px var(--neon),0 0 20px var(--neon),2px 2px 0 #000;
+    font-family:'Still Time','VT323',monospace;
   }
   
   .hud{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
@@ -73,7 +79,23 @@
   
   canvas{
     display:block;width:100%;height:100%;image-rendering:pixelated;
-    image-rendering:crisp-edges;cursor:crosshair;filter:contrast(1.1);
+        image-rendering:crisp-edges;cursor:crosshair;filter:contrast(1.1);
+  }
+
+  /* Mobile layout tweaks */
+  @media (max-width: 600px){
+    html,body{font-size:16px}
+    .wrap{border-width:3px}
+    header,footer{padding:.4rem .6rem;border-width:2px}
+    .brand{font-size:1.3em;letter-spacing:.06em;text-align:center}
+    header{flex-direction:column;align-items:stretch;gap:.4rem}
+    .hud{justify-content:center;flex-wrap:wrap;gap:.3rem}
+    .pill{font-size:.9em;padding:.2rem .4rem}
+    .btn{font-size:.9em;padding:.22rem .48rem}
+    .charge{width:60px;height:6px}
+    .soundToggle{bottom:8px;right:8px;font-size:.75em;padding:.18rem .4rem}
+    footer{font-size:.85em;text-align:center}
+  }
   }
   
   footer{justify-content:center;color:var(--ink);font-size:1em;user-select:none;}
@@ -126,8 +148,8 @@
   
   .soundToggle{
     position:fixed;bottom:12px;right:12px;z-index:1001;
-    padding:.4rem .7rem;border:2px solid var(--ok);background:#000;
-    color:var(--ok);font-family:'VT323',monospace;font-size:1em;
+    padding:.22rem .48rem;border:2px solid var(--ok);background:#000;
+    color:var(--ok);font-family:'VT323',monospace;font-size:.85em;
     cursor:pointer;text-shadow:0 0 6px var(--ok);
   }
   
@@ -142,15 +164,15 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="brand">▲ SPIDER STRIKE ▲</div>
+    <header>
+    <div class="brand">[ SPIDER STRIKE ]</div>
     <div class="hud">
       <div class="pill" id="scorePill">SCR:<span id="score">0</span></div>
       <div class="pill">HP:<span id="lives">10</span></div>
       <div class="pill">SLK:<span id="silk">50</span></div>
       <div class="pill">CST:<span id="cost">25</span></div>
       <div class="pill">WV:<span id="wave">1</span></div>
-      <div class="pill">SPD:<span id="speed">1×</span></div>
+      <div class="pill">SPD:<span id="speed">1x</span></div>
       <div class="pill small" style="display:flex;flex-direction:column;align-items:center;padding:.2rem .5rem">
         <div style="font-size:.8rem">NUKE</div>
         <div class="charge"><i id="chargeBar"></i></div>
@@ -162,7 +184,7 @@
 
   <div id="gameContainer"><canvas id="game"></canvas></div>
 
-  <footer>▼ CLICK TO DEPLOY WEB NODES ▼ [R]ESTART ▼ [N]UKE ▼ [+]/[-]SPEED ▼</footer>
+  <footer>| CLICK TO DEPLOY WEB NODES | [R]ESTART | [N]UKE | [+]/[-]SPEED |</footer>
 
   <div id="overlay" class="overlay">
     <div class="card">
@@ -177,14 +199,14 @@
         <span class="kbd">CLICK</span><span class="kbd">R</span><span class="kbd">N</span><span class="kbd">+</span><span class="kbd">-</span>
       </div>
       <div style="display:flex;gap:.6rem;justify-content:center">
-        <button id="startBtn" class="btn">▶ START</button>
-        <button id="howBtn" class="btn">? INFO</button>
+        <button id="startBtn" class="btn">START</button>
+        <button id="howBtn" class="btn">INFO</button>
       </div>
     </div>
   </div>
 </div>
 
-<button id="soundToggle" class="soundToggle">🔊 SFX ON</button>
+<button id="soundToggle" class="soundToggle">SFX ON</button>
 
 <script>
 (() => {
@@ -197,8 +219,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .g{fill:rgba(255,140,0,0.18)}
+      .o{fill:#0c0c12;stroke:#ffd000;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .s{fill:#0c0c12;stroke:#ffd000;stroke-width:1.2}
+      .g{fill:rgba(255,208,0,0.12)}
       .w{stroke:rgba(255,255,255,0.35);stroke-width:1;stroke-linecap:round}
     </style>
   </defs>
@@ -296,9 +319,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .w{fill:rgba(255,140,0,0.16)}
-      .g{fill:rgba(255,140,0,0.10)}
+      .o{fill:#0c0c12;stroke:#00e5ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(0,229,255,0.16)}
+      .g{fill:rgba(0,229,255,0.08)}
     </style>
   </defs>
   <!-- GNAT: tiny flyer with wings -->
@@ -334,9 +357,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .s{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.2}
-      .g{fill:rgba(255,140,0,0.12)}
+      .o{fill:#0c0c12;stroke:#ffd000;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .s{fill:#0c0c12;stroke:#ffd000;stroke-width:1.2}
+      .g{fill:rgba(255,208,0,0.12)}
     </style>
   </defs>
   <!-- BEETLE: chunky shell, slow, web-resistant -->
@@ -378,9 +401,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .a{stroke:#ff8c00;stroke-width:1.2;stroke-linecap:round}
-      .g{fill:rgba(255,140,0,0.10)}
+      .o{fill:#0c0c12;stroke:#00e5ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(0,229,255,0.16)}
+      .g{fill:rgba(0,229,255,0.08)}
     </style>
   </defs>
   <!-- ROACH: long body, antennae, nuke-immune -->
@@ -418,10 +441,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .w{fill:rgba(255,140,0,0.14)}
-      .y{stroke:#ffb84d;stroke-width:1.2}
-      .g{fill:rgba(255,140,0,0.08)}
+      .o{fill:#0c0c12;stroke:#00e5ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(0,229,255,0.16)}
+      .g{fill:rgba(0,229,255,0.08)}
     </style>
   </defs>
   <!-- WASP: fast, striped abdomen, stinger -->
@@ -610,7 +632,7 @@
     }
   }
 
-  // SFX player – uses folder assets/audio; falls back to synth if missing
+  // SFX player � uses folder assets/audio; falls back to synth if missing
   function playSound(type) {
     if (!sounds.enabled) return;
     if (!sounds.ext) loadAllAudio();
@@ -748,7 +770,7 @@
     }
   }
 
-  // Background music – loads from assets/audio/music/bg.(mp3|ogg|wav)
+  // Background music � loads from assets/audio/music/bg.(mp3|ogg|wav)
   function startMusic() {
     if (!sounds.musicEnabled) return;
     if (!sounds.ext) loadAllAudio();
@@ -771,7 +793,7 @@
   soundToggle.addEventListener('click', () => {
     sounds.enabled = !sounds.enabled;
     sounds.musicEnabled = !sounds.musicEnabled;
-    soundToggle.textContent = sounds.enabled ? '🔊 SFX ON' : '🔇 SFX OFF';
+    soundToggle.textContent = sounds.enabled ? 'SFX ON' : 'SFX OFF';
     if (sounds.musicEnabled && state.running) {
       startMusic();
     } else {
@@ -784,7 +806,7 @@
   const canvas = document.getElementById('game');
   const gameContainer = document.getElementById('gameContainer');
   const ctx = canvas.getContext('2d', {alpha:false});
-  const PIXEL_SCALE = 3;
+  let PIXEL_SCALE = (window.matchMedia && matchMedia('(max-width: 600px)').matches) ? 2 : 3;
   
   function resize(){ 
     const rect = gameContainer.getBoundingClientRect();
@@ -794,6 +816,13 @@
   addEventListener('resize', resize, {passive:true}); 
   resize();
   ctx.imageSmoothingEnabled = false;
+
+  const mq = (window.matchMedia && matchMedia('(max-width: 600px)'));
+  if (mq) {
+    const applyScale = () => { PIXEL_SCALE = mq.matches ? 2 : 3; resize(); };
+    if (mq.addEventListener) mq.addEventListener('change', applyScale);
+    else if (mq.addListener) mq.addListener(applyScale);
+  }
 
   const elScore = document.getElementById('score');
   const elLives = document.getElementById('lives');
@@ -816,7 +845,7 @@
   const START_LIVES = 10, START_SILK = 50, SILK_MAX = 240, SILK_REGEN = 6;
   const NODE_COST = 15, NODE_R = 28, NODE_SLOW = 0.55, NODE_FADE = 0.35, NODE_DUR0 = 100, NODE_DECAY_PER_ENEMY = 7;
   const ENEMY_BASE = 8, ENEMY_HP0 = 10, ENEMY_SPEED0 = 0.025;
-  const WAVE_GAP_MS = 3500, SPAWN_BURST = 180, SPEEDS = [1, 1.5, 2, 3], STUCK_KILL_MS = 2500;
+  const WAVE_GAP_MS = 7000, SPAWN_BURST = 260, SPEEDS = [1, 1.5, 2, 3], STUCK_KILL_MS = 2500;
   const NUKE_CHARGE_MAX = 100, NUKE_SCORE_PER_KILL = 8, NUKE_SILK_PER_KILL = 3;
   // Powerup (health bug)
   const POWERUP_HEAL = 2, POWERUP_SPEED = 0.02, POWERUP_INTERVAL_MS = 5000, POWERUP_CHANCE = 1.0;
@@ -862,7 +891,7 @@
     if (full){
       elScore.textContent=state.score; elLives.textContent=state.lives;
       elSilk.textContent=Math.floor(state.silk); elCost.textContent=NODE_COST;
-      elWave.textContent=state.wave; elSpeed.textContent=SPEEDS[state.speedIndex]+'×';
+      elWave.textContent=state.wave; elSpeed.textContent=SPEEDS[state.speedIndex]+'x';
       chargeBar.style.width='0%'; nukeBtn.disabled=true;
     }
     stopMusic();
@@ -931,7 +960,7 @@
   startBtn.addEventListener('click', ()=>{playSound('button'); overlay.style.display='none'; start();});
   howBtn.addEventListener('click', ()=>{
     playSound('button');
-    ovTitle.textContent='◄ INFO ►';
+    ovTitle.textContent='[ INFO ]';
     ovMsg.innerHTML = `
       <b>GOAL:</b> PROTECT CENTER NEST<br>
       <b>NODES:</b> CLICK TO DEPLOY STICKY WEB<br>
@@ -957,7 +986,7 @@
     requestAnimationFrame(loop);
   }
   
-  function changeSpeed(d){state.speedIndex=Math.max(0,Math.min(SPEEDS.length-1,state.speedIndex+d)); elSpeed.textContent=SPEEDS[state.speedIndex]+'×';}
+  function changeSpeed(d){state.speedIndex=Math.max(0,Math.min(SPEEDS.length-1,state.speedIndex+d)); elSpeed.textContent=SPEEDS[state.speedIndex]+'x';}
 
   function scheduleWave(){
     state.inWave=true; 
@@ -1091,7 +1120,21 @@
             playSound('healthUp');
           }
         }
-        playSound('webDeploy');
+                // Direct enemy hit: kill and heal like powerup
+        let healed = 0;
+        for (let k = state.enemies.length - 1; k >= 0; k--) {
+          const e = state.enemies[k];
+          if (Math.hypot(e.x - s.tx, e.y - s.ty) <= CAPTURE_R) {
+            state.enemies.splice(k, 1);
+            healed += POWERUP_HEAL;
+            addScore(6, e.x, e.y);
+            emitBurst(e.x, e.y, '#ff3366', 22);
+          }
+        }
+        if (healed > 0) {
+          state.lives += healed; elLives.textContent = Math.max(0, state.lives);
+          playSound('healthUp');
+        }        playSound('webDeploy');
         shots.splice(i, 1);
         continue;
       }
@@ -1115,14 +1158,8 @@
     let killed = 0;
     for (let i=state.enemies.length-1;i>=0;i--){
       const e = state.enemies[i];
-      if (e.type.nukeImmune){
-        const vx = e.x - center.x, vy = e.y - center.y; const d = Math.hypot(vx,vy)||1;
-        const ux=vx/d, uy=vy/d;
-        e.x += ux * 20; e.y += uy * 20;
-        e.stun = 500;
-        continue;
-      }
-      emitBurst(e.x, e.y, '#00ff66', 18);
+      if (false) { }
+      emitBurst(e.x, e.y, (e.type && e.type.color) || COLORS.particle, 28);
       createFlyingScore(e.x, e.y, NUKE_SCORE_PER_KILL);
       state.enemies.splice(i,1); killed++;
     }
@@ -1452,9 +1489,9 @@
   function gameOver(){
     state.running=false; 
     overlay.style.display='grid';
-    ovTitle.textContent='▼ GAME OVER ▼';
+    ovTitle.textContent='[ GAME OVER ]';
     ovMsg.innerHTML = `FINAL SCORE: <b>${state.score}</b><br>WAVE: <b>${state.wave}</b><br><br>NEST DESTROYED`;
-    startBtn.textContent='▶ RETRY';
+    startBtn.textContent='? RETRY';
     playSound('gameOver'); // Game over sound
     stopMusic(); // Stop background music
   }
@@ -1465,3 +1502,22 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
