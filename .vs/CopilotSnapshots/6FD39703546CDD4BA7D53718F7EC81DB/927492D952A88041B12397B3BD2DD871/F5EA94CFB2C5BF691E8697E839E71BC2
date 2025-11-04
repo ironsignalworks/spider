@@ -8,9 +8,9 @@
   @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
   
   :root{
-    --bg:#0a0014; --ink:#ffe9cc; --muted:#ffcf99;
-    --neon:#ff8c00; --ok:#ff8c00; --warn:#ffb84d; --bad:#cc5500;
-    --grid:#2a1100;
+    --bg:#0a0014; --ink:#000000; --muted:#333333;
+    --neon:#ff4500; --ok:#000000; --warn:#ffff00; --bad:#ff3131;
+    --grid:#330044;
   }
   *{box-sizing:border-box}
   
@@ -23,7 +23,7 @@
   .wrap{
     position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;
     background:linear-gradient(180deg, #0a0014 0%, #14001e 100%);
-    border:4px solid var(--neon);box-shadow:inset 0 0 80px #ff8c0040;
+    border:4px solid #ff006e;box-shadow:inset 0 0 80px #ff006e40;
   }
   
   .wrap::before {
@@ -42,7 +42,7 @@
   
   header,footer{
     display:flex;align-items:center;gap:.6rem;padding:.5rem 1rem;
-    background:#000;border:3px solid var(--neon);text-shadow:0 0 8px currentColor;
+    background:#000;border:3px solid #ff006e;text-shadow:0 0 8px currentColor;
   }
   
   header{justify-content:space-between;user-select:none;animation:flicker 0.15s infinite;}
@@ -56,7 +56,7 @@
   
   .pill{
     padding:.3rem .6rem;border:2px solid var(--ok);background:#000;font-size:1em;
-    color:var(--ok);text-shadow:0 0 6px var(--ok);box-shadow:inset 0 0 8px #ff8c0040;
+    color:var(--ok);text-shadow:0 0 6px var(--ok);box-shadow:inset 0 0 8px var(--ok)40;
     position:relative;transition:transform 0.1s;
   }
   
@@ -76,7 +76,7 @@
     image-rendering:crisp-edges;cursor:crosshair;filter:contrast(1.1);
   }
   
-  footer{justify-content:center;color:var(--ink);font-size:1em;user-select:none;}
+  footer{justify-content:center;color:var(--muted);font-size:1em;user-select:none;}
   
   .overlay{
     position:absolute;inset:0;display:none;place-items:center;
@@ -85,7 +85,7 @@
   
   .card{
     background:#000;border:4px solid var(--neon);
-    box-shadow:0 0 40px var(--neon), inset 0 0 20px #ff8c0040;
+    box-shadow:0 0 40px var(--neon),inset 0 0 20px var(--neon)40;
     padding:20px 25px;max-width:min(92vw,620px);text-align:center;
   }
   
@@ -98,7 +98,7 @@
   
   .kbd{
     border:2px solid var(--ok);background:#000;padding:.3rem .5rem;
-    color:var(--ok);text-shadow:0 0 6px var(--ok);
+    color:var(--ok);text-shadow:0 0 6px var,--ok);
   }
   
   .nukeBtn{
@@ -113,14 +113,14 @@
   }
   
   .charge>i{
-    display:block;height:100%;background:var(--warn);box-shadow:0 0 8px var(--warn);width:0%;
+    display:block;height:100%;background:var(--warn);box-shadow:0 0 8px var,--warn);width:0%;
   }
   
   .small{font-size:.9em;color:var(--muted);}
   
   .flyingScore{
     position:absolute;font-family:'VT323',monospace;font-size:28px;
-    color:#ff66cc;text-shadow:0 0 10px #ff66cc,0 0 20px #ff66cc;
+    color:var(--ok);text-shadow:0 0 10px var,--ok),0 0 20px var,--ok);
     pointer-events:none;z-index:100;font-weight:bold;
   }
   
@@ -128,7 +128,7 @@
     position:fixed;bottom:12px;right:12px;z-index:1001;
     padding:.4rem .7rem;border:2px solid var(--ok);background:#000;
     color:var(--ok);font-family:'VT323',monospace;font-size:1em;
-    cursor:pointer;text-shadow:0 0 6px var(--ok);
+    cursor:pointer;text-shadow:0 0 6px var,--ok);
   }
   
   .soundToggle:hover{background:var(--ok);color:#000;}
@@ -197,8 +197,8 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .g{fill:rgba(255,140,0,0.18)}
+      .o{fill:#0c0c12;stroke:#ff2136;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .g{fill:rgba(255,33,54,0.22)}
       .w{stroke:rgba(255,255,255,0.35);stroke-width:1;stroke-linecap:round}
     </style>
   </defs>
@@ -296,9 +296,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .w{fill:rgba(255,140,0,0.16)}
-      .g{fill:rgba(255,140,0,0.10)}
+      .o{fill:#0c0c12;stroke:#00ffff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(0,255,255,0.16)}
+      .g{fill:rgba(255,255,255,0.06)}
     </style>
   </defs>
   <!-- GNAT: tiny flyer with wings -->
@@ -334,9 +334,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .s{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.2}
-      .g{fill:rgba(255,140,0,0.12)}
+      .o{fill:#0c0c12;stroke:#ffff00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .s{fill:#0c0c12;stroke:#ffff00;stroke-width:1.2}
+      .g{fill:rgba(255,255,0,0.12)}
     </style>
   </defs>
   <!-- BEETLE: chunky shell, slow, web-resistant -->
@@ -378,9 +378,9 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .a{stroke:#ff8c00;stroke-width:1.2;stroke-linecap:round}
-      .g{fill:rgba(255,140,0,0.10)}
+      .o{fill:#0c0c12;stroke:#ff8800;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .a{stroke:#ff8800;stroke-width:1.2;stroke-linecap:round}
+      .g{fill:rgba(255,136,0,0.10)}
     </style>
   </defs>
   <!-- ROACH: long body, antennae, nuke-immune -->
@@ -418,10 +418,10 @@
 <svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .o{fill:#0c0c12;stroke:#ff8c00;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-      .w{fill:rgba(255,140,0,0.14)}
-      .y{stroke:#ffb84d;stroke-width:1.2}
-      .g{fill:rgba(255,140,0,0.08)}
+      .o{fill:#0c0c12;stroke:#ff0044;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(255,0,68,0.14)}
+      .y{stroke:#ffcc33;stroke-width:1.2}
+      .g{fill:rgba(255,255,255,0.05)}
     </style>
   </defs>
   <!-- WASP: fast, striped abdomen, stinger -->
@@ -482,12 +482,12 @@
     }
   }
 
-  // Scale by enemy type to match visual size - DOUBLED
+  // Scale by enemy type to match visual size
   const SCALE_BY_TYPE = {
-    gnat: 0.56,
-    beetle: 0.64,
-    roach: 0.60,
-    wasp: 0.60
+    gnat: 0.28,
+    beetle: 0.32,
+    roach: 0.30,
+    wasp: 0.30
   };
 
   function drawEnemySprite(ctx, enemy, scale = 1) {
@@ -768,15 +768,15 @@
   const NUKE_CHARGE_MAX = 100, NUKE_SCORE_PER_KILL = 8, NUKE_SILK_PER_KILL = 3;
 
   const COLORS = {
-    bg:'#0a0014', grid:'#cc6e00', nest:'#ff8c00', nestCore:'#000',
-    node:'#ff8c00', nodeDim:'#804400', web:'#ff8c0040', particle:'#00ff66'
+    bg:'#0a0014', grid:'#1a0028', nest:'#ff006e', nestCore:'#000',
+    node:'#00ff41', nodeDim:'#007a20', web:'#00ff4140', particle:'#ff006e'
   };
 
   const TYPES = [
-    {key:'gnat', name:'GNAT', color:'#ff8c00', hp:ENEMY_HP0+0, speed:ENEMY_SPEED0*1.25, webResist:0.00, nukeImmune:false, stuckMult:1.0},
-    {key:'beetle', name:'BEETLE', color:'#ff8c00', hp:ENEMY_HP0+8, speed:ENEMY_SPEED0*0.85, webResist:0.60, nukeImmune:false, stuckMult:1.6},
-    {key:'roach', name:'ROACH', color:'#ff8c00', hp:ENEMY_HP0+4, speed:ENEMY_SPEED0*1.00, webResist:0.20, nukeImmune:true, stuckMult:1.2},
-    {key:'wasp', name:'WASP', color:'#ff8c00', hp:ENEMY_HP0+6, speed:ENEMY_SPEED0*1.35, webResist:0.30, nukeImmune:false, stuckMult:1.1}
+    {key:'gnat', name:'GNAT', color:'#00ffff', hp:ENEMY_HP0+0, speed:ENEMY_SPEED0*1.25, webResist:0.00, nukeImmune:false, stuckMult:1.0},
+    {key:'beetle', name:'BEETLE', color:'#ffff00', hp:ENEMY_HP0+8, speed:ENEMY_SPEED0*0.85, webResist:0.60, nukeImmune:false, stuckMult:1.6},
+    {key:'roach', name:'ROACH', color:'#ff8800', hp:ENEMY_HP0+4, speed:ENEMY_SPEED0*1.00, webResist:0.20, nukeImmune:true, stuckMult:1.2},
+    {key:'wasp', name:'WASP', color:'#ff0044', hp:ENEMY_HP0+6, speed:ENEMY_SPEED0*1.35, webResist:0.30, nukeImmune:false, stuckMult:1.1}
   ];
 
   function pickType(wave){
@@ -794,7 +794,7 @@
     running:false, t:0, dt:0, last:performance.now(),
     speedIndex:0, score:0, lives:START_LIVES, silk:START_SILK,
     wave:1, inWave:false, nextWaveAt:0, toSpawn:0, spawnTimer:0,
-    enemies:[], nodes:[], particles:[], shots:[], shake:0,
+    enemies:[], nodes:[], particles:[], shake:0,
     spiderFlash:0 // flash timer for damage
   };
   state.nukeCharge = 0; state.nukeReady = false;
@@ -803,7 +803,7 @@
     state.running=false; state.t=0; state.dt=0; state.last=performance.now();
     state.speedIndex=0; state.score=0; state.lives=START_LIVES; state.silk=START_SILK;
     state.wave=1; state.inWave=false; state.nextWaveAt=0; state.toSpawn=0; state.spawnTimer=0;
-    state.enemies.length=0; state.nodes.length=0; state.particles.length=0; state.shots.length=0; state.shake=0;
+    state.enemies.length=0; state.nodes.length=0; state.particles.length=0; state.shake=0;
     state.nukeCharge=0; state.nukeReady=false; state.spiderFlash=0;
     if (full){
       elScore.textContent=state.score; elLives.textContent=state.lives;
@@ -929,10 +929,9 @@
     const c = CENTER(); const d = Math.hypot(x-c.x, y-c.y);
     if (d < NEST_R + 10) return;
     state.silk = Math.max(0, state.silk - NODE_COST); elSilk.textContent=Math.floor(state.silk);
-    // Fire a web shot from center to target; node spawns on impact
-    state.shots.push({ x:c.x, y:c.y, tx:x, ty:y, speed:0.40 });
-    state.shake = 2;
-    playSound('button'); // firing cue; deploy sound on impact
+    state.nodes.push({x,y, r:NODE_R, t:state.t, dur:NODE_DUR0});
+    state.shake = 3;
+    playSound('webDeploy'); // Web deployment sound
   }
 
   function addScore(n, worldX, worldY){ 
@@ -967,25 +966,6 @@
       if (p.life >= p.max) particles.splice(i,1);
     }
   }
-
-  function updateShots(dt){
-    const shots = state.shots;
-    for (let i = shots.length - 1; i >= 0; i--) {
-      const s = shots[i];
-      const vx = s.tx - s.x, vy = s.ty - s.y; const dist = Math.hypot(vx, vy) || 1;
-      const step = s.speed * dt; // pixels per ms
-      if (dist <= step + 1) {
-        // Impact: spawn node, small burst, sound
-        state.nodes.push({ x: s.tx, y: s.ty, r: NODE_R, t: state.t, dur: NODE_DUR0 });
-        emitBurst(s.tx, s.ty, COLORS.node, 10);
-        playSound('webDeploy');
-        shots.splice(i, 1);
-        continue;
-      }
-      const ux = vx / dist, uy = vy / dist;
-      s.x += ux * step; s.y += uy * step;
-    }
-  }
   function drawParticles(){
     for (const p of particles){
       const a = 1 - (p.life / p.max);
@@ -1009,7 +989,7 @@
         e.stun = 500;
         continue;
       }
-      emitBurst(e.x, e.y, '#00ff66', 18);
+      emitBurst(e.x, e.y, e.type.color, 18);
       createFlyingScore(e.x, e.y, NUKE_SCORE_PER_KILL);
       state.enemies.splice(i,1); killed++;
     }
@@ -1027,7 +1007,7 @@
     const flashAnim = (t)=>{
       const p=(t-start)/dur; if (p>=1) return;
       ctx.save(); ctx.globalAlpha = (1-p) * 0.4;
-      ctx.fillStyle='#ff8c00';
+      ctx.fillStyle='#ffff00';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
       requestAnimationFrame(flashAnim);
@@ -1045,8 +1025,6 @@
 
     if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 0.03);
     if (state.spiderFlash > 0) state.spiderFlash = Math.max(0, state.spiderFlash - dt);
-
-    updateShots(dt);
 
     state.silk = Math.min(SILK_MAX, state.silk + SILK_REGEN * (dt/1000)); elSilk.textContent=Math.floor(state.silk);
 
@@ -1098,7 +1076,7 @@
       const need = STUCK_KILL_MS * (e.type.stuckMult || 1);
       if (slow < 0.75 && heavySlow) e.stuckTimer = (e.stuckTimer||0) + dt; else e.stuckTimer = Math.max(0,(e.stuckTimer||0) - dt*1.5);
       if (e.stuckTimer >= need){
-        emitBurst(e.x, e.y, '#00ff66', 14);
+        emitBurst(e.x, e.y, e.type.color, 14);
         addScore(6, e.x, e.y);
         state.silk = Math.min(SILK_MAX, state.silk + 2); elSilk.textContent=Math.floor(state.silk);
         state.shake = 2;
@@ -1134,46 +1112,17 @@
     ctx.fillStyle = COLORS.bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Pixelated spiderweb background
-    {
-      const c = CENTER();
-      ctx.globalAlpha = 0.5;
-      // Concentric rings
-      const maxR = Math.max(
-        Math.hypot(c.x, c.y),
-        Math.hypot(canvas.width - c.x, c.y),
-        Math.hypot(c.x, canvas.height - c.y),
-        Math.hypot(canvas.width - c.x, canvas.height - c.y)
-      );
-      ctx.lineWidth = 1;
-      for (let r = 16; r < maxR; r += 16) {
-        drawPixelCircle(Math.floor(c.x), Math.floor(c.y), Math.floor(r), COLORS.grid, true);
-      }
-
-      // Radial lines
-      const radials = 16;
-      for (let i = 0; i < radials; i++) {
-        const a = (i / radials) * Math.PI * 2;
-        const x1 = Math.floor(c.x + Math.cos(a) * (maxR + 8));
-        const y1 = Math.floor(c.y + Math.sin(a) * (maxR + 8));
-        drawPixelLine(Math.floor(c.x), Math.floor(c.y), x1, y1, COLORS.grid);
-      }
-      ctx.globalAlpha = 1;
+    ctx.strokeStyle = COLORS.grid;
+    ctx.lineWidth = 1;
+    const gridSize = 16;
+    for (let x = 0; x < canvas.width; x += gridSize) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += gridSize) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
     const c = CENTER();
-
-    // Draw web shots (strand + head)
-    for (const s of state.shots) {
-      const strandColor = '#ffe9cc';
-      // anchor from current center to shot head for an elastic strand feel
-      drawPixelLine(Math.floor(c.x), Math.floor(c.y), Math.floor(s.x), Math.floor(s.y), strandColor);
-      // slight thickness by offset
-      drawPixelLine(Math.floor(c.x+1), Math.floor(c.y), Math.floor(s.x+1), Math.floor(s.y), strandColor);
-      // head
-      ctx.fillStyle = strandColor;
-      ctx.fillRect(Math.floor(s.x)-1, Math.floor(s.y)-1, 2, 2);
-    }
 
     for (const n of state.nodes) {
       const steps = 8;
@@ -1186,29 +1135,12 @@
       }
       ctx.globalAlpha = 1;
 
-      // Pixelated cobweb texture overlay (radials + rings)
-      {
-        const webColor = '#ffe9cc';
-        ctx.globalAlpha = 0.35;
-        const radials = 12;
-        for (let i = 0; i < radials; i++){
-          const a = (i / radials) * Math.PI * 2;
-          const ex = Math.floor(n.x + Math.cos(a) * n.r);
-          const ey = Math.floor(n.y + Math.sin(a) * n.r);
-          drawPixelLine(Math.floor(n.x), Math.floor(n.y), ex, ey, webColor);
-        }
-        for (let rr = 6; rr < n.r; rr += 6){
-          drawPixelRing(Math.floor(n.x), Math.floor(n.y), Math.floor(rr), webColor, 24);
-        }
-        ctx.globalAlpha = 1;
-      }
-
       const coreSize = 4;
       ctx.fillStyle = COLORS.nodeDim;
       ctx.fillRect(Math.floor(n.x - coreSize/2), Math.floor(n.y - coreSize/2), coreSize, coreSize);
       
       const p = Math.max(0, Math.min(1, n.dur / NODE_DUR0));
-      ctx.fillStyle = p > 0.5 ? '#ff8c00' : (p > 0.25 ? '#ffb84d' : '#cc5500');
+      ctx.fillStyle = p > 0.5 ? '#00ff41' : (p > 0.25 ? '#ffff00' : '#ff3131');
       const durSize = Math.ceil(p * 3);
       if (durSize > 0) {
         ctx.fillRect(Math.floor(n.x - 1), Math.floor(n.y - 6), durSize, 1);
@@ -1227,9 +1159,9 @@
       if (e.stuckTimer && e.stuckTimer > 0) {
         const need = STUCK_KILL_MS * (e.type.stuckMult || 1);
         const p = Math.min(1, e.stuckTimer / need);
-        ctx.fillStyle = '#ff8c00';
+        ctx.fillStyle = '#ff006e';
         const ring = Math.floor(6 + p * 3);
-        drawPixelCircle(e.x, e.y, ring, '#ff8c00', true);
+        drawPixelCircle(e.x, e.y, ring, '#ff006e', true);
       }
       
       // Stun indicator (drawn after sprite)
@@ -1241,7 +1173,7 @@
     }
 
     // Nest - chunky pixel art - ALWAYS IN CENTER
-    // Remove outer circle glow - only keep nest body and outline
+    drawPixelCircle(c.x, c.y, NEST_R * 2, COLORS.grid, false);
     
     // Nest body
     ctx.fillStyle = COLORS.nestCore;
@@ -1252,13 +1184,13 @@
     ctx.lineWidth = 2;
     drawPixelCircle(c.x, c.y, NEST_R, COLORS.nest, true);
     
-    // Animated spider sprite in center - DOUBLED SIZE
+    // Animated spider sprite in center
     ctx.save();
-    drawSpiderSprite(ctx, c.x, c.y, 0.6); // Scale 0.6 for double size
+    drawSpiderSprite(ctx, c.x, c.y, 0.3); // Scale 0.3 for lofi pixel size
     
     // Flash effect when damaged
     if (state.spiderFlash > 0) {
-      flashSpider(ctx, c.x, c.y, 0.6); // Match doubled size
+      flashSpider(ctx, c.x, c.y, 0.3);
     }
     ctx.restore();
 
@@ -1269,7 +1201,7 @@
     if (outlineOnly) {
       ctx.strokeStyle = color;
       const points = [];
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 16) {
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
         points.push({x: Math.floor(cx + Math.cos(a) * r), y: Math.floor(cy + Math.sin(a) * r)});
       }
       for (let i = 0; i < points.length; i++) {
@@ -1280,35 +1212,6 @@
     } else {
       ctx.fillStyle = color;
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
-  function drawPixelLine(x0, y0, x1, y1, color) {
-    let x = Math.floor(x0), y = Math.floor(y0);
-    const tx = Math.floor(x1), ty = Math.floor(y1);
-    const dx = Math.abs(tx - x), dy = Math.abs(ty - y);
-    const sx = x < tx ? 1 : -1;
-    const sy = y < ty ? 1 : -1;
-    let err = dx - dy;
-    ctx.fillStyle = color;
-    while (true) {
-      ctx.fillRect(x, y, 1, 1);
-      if (x === tx && y === ty) break;
-      const e2 = err * 2;
-      if (e2 > -dy) { err -= dy; x += sx; }
-      if (e2 < dx) { err += dx; y += sy; }
-    }
-  }
-
-  function drawPixelRing(cx, cy, r, color, segments = 24){
-    const pts = [];
-    for (let i = 0; i < segments; i++){
-      const a = (i / segments) * Math.PI * 2;
-      pts.push({ x: Math.floor(cx + Math.cos(a) * r), y: Math.floor(cy + Math.sin(a) * r) });
-    }
-    for (let i = 0; i < pts.length; i++){
-      const p1 = pts[i], p2 = pts[(i+1)%pts.length];
-      drawPixelLine(p1.x, p1.y, p2.x, p2.y, color);
     }
   }
 
