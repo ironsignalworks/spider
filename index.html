@@ -8,7 +8,7 @@
   @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
   
   :root{
-    --bg:#0a0014; --ink:#ffe9cc; --muted:#ffcf99;
+    --bg:#0c0602; --ink:#ffeedd; --muted:#ffcf99;
     --neon:#ff8c00; --ok:#ff8c00; --warn:#ffb84d; --bad:#cc5500;
     --grid:#2a1100;
   }
@@ -22,7 +22,7 @@
   
   .wrap{
     position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;
-    background:linear-gradient(180deg, #0a0014 0%, #14001e 100%);
+    background:linear-gradient(180deg, #0b0500 0%, #1a0e00 100%);
     border:4px solid var(--neon);box-shadow:inset 0 0 80px #ff8c0040;
   }
   
@@ -521,9 +521,60 @@
   const sounds = {
     enabled: true,
     musicEnabled: true,
+    sfx: {},
+    music: null,
+    ext: null,
     musicNode: null,
     musicGain: null
   };
+
+  const AUDIO_PATH = 'assets/audio/';
+  const SFX_PATH = AUDIO_PATH + 'sfx/';
+  const MUSIC_PATH = AUDIO_PATH + 'music/';
+  const SFX_FILES = {
+    webDeploy: 'webDeploy',
+    enemyKill: 'enemyKill',
+    damage: 'damage',
+    scorePoint: 'scorePoint',
+    scoreCollect: 'scoreCollect',
+    nuke: 'nuke',
+    waveStart: 'waveStart',
+    waveComplete: 'waveComplete',
+    nukeCharged: 'nukeCharged',
+    gameOver: 'gameOver',
+    button: 'button'
+  };
+  const SFX_VOL = {
+    webDeploy: 0.35,
+    enemyKill: 0.4,
+    damage: 0.5,
+    scorePoint: 0.25,
+    scoreCollect: 0.25,
+    nuke: 0.5,
+    waveStart: 0.3,
+    waveComplete: 0.35,
+    nukeCharged: 0.35,
+    gameOver: 0.5,
+    button: 0.2
+  };
+
+  function detectAudioExt(){
+    const a = document.createElement('audio');
+    if (a.canPlayType('audio/mpeg')) return '.mp3';
+    if (a.canPlayType('audio/ogg')) return '.ogg';
+    if (a.canPlayType('audio/wav')) return '.wav';
+    return '.mp3';
+  }
+
+  function loadAllAudio(){
+    sounds.ext = detectAudioExt();
+    for (const [k, base] of Object.entries(SFX_FILES)){
+      const el = new Audio(SFX_PATH + base + sounds.ext);
+      el.preload = 'auto';
+      el.volume = SFX_VOL[k] ?? 0.35;
+      sounds.sfx[k] = el;
+    }
+  }
 
   // Resume audio context on user interaction (browser requirement)
   function resumeAudio() {
@@ -532,18 +583,28 @@
     }
   }
 
-  // Placeholder synthesized sounds - replace with MP3 loaders later
+  // SFX player – uses folder assets/audio; falls back to synth if missing
   function playSound(type) {
     if (!sounds.enabled) return;
+    if (!sounds.ext) loadAllAudio();
+    // Try folder-based SFX first
+    const base = sounds.sfx && sounds.sfx[type];
+    if (base) {
+      try{
+        const a = base.cloneNode();
+        a.volume = base.volume;
+        a.play();
+        return;
+      }catch(e){/* fall back to synth */}
+    }
+
+    // Fallback: simple WebAudio beeps
     resumeAudio();
-    
     const now = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     switch(type) {
       case 'webDeploy': // Node placement
         osc.frequency.setValueAtTime(400, now);
@@ -660,58 +721,22 @@
     }
   }
 
-  // Background music - placeholder loop
-  // Replace this entire function with MP3 loader
+  // Background music – loads from assets/audio/music/bg.(mp3|ogg|wav)
   function startMusic() {
-    if (!sounds.musicEnabled || sounds.musicNode) return;
-    resumeAudio();
-    
-    // Create a simple repeating melody as placeholder
-    // REPLACE THIS WITH: const audio = new Audio('path/to/music.mp3'); audio.loop = true; audio.play();
-    const now = audioCtx.currentTime;
-    
-    // Create gain node for music volume control
-    sounds.musicGain = audioCtx.createGain();
-    sounds.musicGain.gain.setValueAtTime(0.05, now); // Low volume for bg music
-    sounds.musicGain.connect(audioCtx.destination);
-    
-    // Simple placeholder - replace with actual MP3
-    function playMelodyNote(freq, startTime, duration) {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(sounds.musicGain);
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0.03, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
+    if (!sounds.musicEnabled) return;
+    if (!sounds.ext) loadAllAudio();
+    if (!sounds.music) {
+      sounds.music = new Audio(MUSIC_PATH + 'bg' + (sounds.ext || '.mp3'));
+      sounds.music.loop = true;
+      sounds.music.volume = 0.25;
     }
-    
-    // Placeholder melody loop (replace with MP3)
-    const melody = [440, 494, 523, 494, 440, 392, 349, 392];
-    let time = audioCtx.currentTime;
-    
-    function scheduleMelody() {
-      if (!sounds.musicEnabled) return;
-      melody.forEach((freq, i) => {
-        playMelodyNote(freq, time + i * 0.3, 0.25);
-      });
-      time += melody.length * 0.3;
-      setTimeout(scheduleMelody, (melody.length * 0.3) * 1000);
-    }
-    
-    scheduleMelody();
-    sounds.musicNode = true; // Placeholder flag
+    try{ sounds.music.play(); }catch(e){}
+    sounds.musicNode = sounds.music;
   }
 
   function stopMusic() {
-    // REPLACE WITH: if (audio) { audio.pause(); audio.currentTime = 0; }
+    if (sounds.music) { try{ sounds.music.pause(); sounds.music.currentTime = 0; }catch(e){} }
     sounds.musicNode = null;
-    if (sounds.musicGain) {
-      sounds.musicGain.disconnect();
-      sounds.musicGain = null;
-    }
   }
 
   // Sound toggle button
@@ -762,21 +787,21 @@
   const CENTER = () => ({x: canvas.width/2, y: canvas.height/2});
   const NEST_R = 10;
   const START_LIVES = 10, START_SILK = 50, SILK_MAX = 240, SILK_REGEN = 6;
-  const NODE_COST = 25, NODE_R = 28, NODE_SLOW = 0.55, NODE_FADE = 0.35, NODE_DUR0 = 100, NODE_DECAY_PER_ENEMY = 7;
+  const NODE_COST = 15, NODE_R = 28, NODE_SLOW = 0.55, NODE_FADE = 0.35, NODE_DUR0 = 100, NODE_DECAY_PER_ENEMY = 7;
   const ENEMY_BASE = 8, ENEMY_HP0 = 10, ENEMY_SPEED0 = 0.025;
   const WAVE_GAP_MS = 3500, SPAWN_BURST = 180, SPEEDS = [1, 1.5, 2, 3], STUCK_KILL_MS = 2500;
   const NUKE_CHARGE_MAX = 100, NUKE_SCORE_PER_KILL = 8, NUKE_SILK_PER_KILL = 3;
 
   const COLORS = {
-    bg:'#0a0014', grid:'#cc6e00', nest:'#ff8c00', nestCore:'#000',
+    bg:'#0c0602', grid:'#b56600', nest:'#ff8c00', nestCore:'#000',
     node:'#ff8c00', nodeDim:'#804400', web:'#ff8c0040', particle:'#00ff66'
   };
 
   const TYPES = [
-    {key:'gnat', name:'GNAT', color:'#ff8c00', hp:ENEMY_HP0+0, speed:ENEMY_SPEED0*1.25, webResist:0.00, nukeImmune:false, stuckMult:1.0},
-    {key:'beetle', name:'BEETLE', color:'#ff8c00', hp:ENEMY_HP0+8, speed:ENEMY_SPEED0*0.85, webResist:0.60, nukeImmune:false, stuckMult:1.6},
-    {key:'roach', name:'ROACH', color:'#ff8c00', hp:ENEMY_HP0+4, speed:ENEMY_SPEED0*1.00, webResist:0.20, nukeImmune:true, stuckMult:1.2},
-    {key:'wasp', name:'WASP', color:'#ff8c00', hp:ENEMY_HP0+6, speed:ENEMY_SPEED0*1.35, webResist:0.30, nukeImmune:false, stuckMult:1.1}
+    {key:'gnat',   name:'GNAT',   color:'#00e5ff', hp:ENEMY_HP0+0, speed:ENEMY_SPEED0*1.25, webResist:0.00, nukeImmune:false, stuckMult:1.0},
+    {key:'beetle', name:'BEETLE', color:'#ffd000', hp:ENEMY_HP0+8, speed:ENEMY_SPEED0*0.85, webResist:0.60, nukeImmune:false, stuckMult:1.6},
+    {key:'roach',  name:'ROACH',  color:'#ff7a00', hp:ENEMY_HP0+4, speed:ENEMY_SPEED0*1.00, webResist:0.20, nukeImmune:true, stuckMult:1.2},
+    {key:'wasp',   name:'WASP',   color:'#ff3366', hp:ENEMY_HP0+6, speed:ENEMY_SPEED0*1.35, webResist:0.30, nukeImmune:false, stuckMult:1.1}
   ];
 
   function pickType(wave){
@@ -921,7 +946,7 @@
     const t = pickType(state.wave);
     const speed = (t.speed + 0.002*(state.wave-1)) * (0.9 + Math.random()*0.25);
     const hp = Math.round(t.hp + 0.6*(state.wave-1));
-    state.enemies.push({x,y, hp, speed, slow:1, stuckTimer:0, type:t, stun:0});
+    state.enemies.push({x,y, hp, speed, slow:1, stuckTimer:0, type:t, stun:0, vx:0, vy:0});
   }
 
   function placeNode(x,y){
@@ -1106,10 +1131,20 @@
         state.enemies.splice(i,1); continue;
       }
 
-      if (e.stun>0){e.stun -= dt;} else {
-        const vx = c.x - e.x, vy = c.y - e.y; const dist = Math.hypot(vx,vy)||1;
-        const ux=vx/dist, uy=vy/dist; const step = e.speed * slow * dt; e.x += ux*step; e.y += uy*step;
-        if (dist <= NEST_R){state.enemies.splice(i,1); damage(1); continue;}
+      if (e.stun>0){
+        e.stun -= dt;
+        e.vx = (e.vx||0) * 0.92;
+        e.vy = (e.vy||0) * 0.92;
+      } else {
+        const dx = c.x - e.x, dy = c.y - e.y; const dist = Math.hypot(dx,dy)||1;
+        const ux = dx / dist, uy = dy / dist;
+        const desired = e.speed * slow; // px/ms
+        const alpha = 1 - Math.exp(-dt * 0.02); // smoothing factor 0..1
+        e.vx = (e.vx||0) + (ux*desired - (e.vx||0)) * alpha;
+        e.vy = (e.vy||0) + (uy*desired - (e.vy||0)) * alpha;
+        e.x += e.vx * dt; e.y += e.vy * dt;
+        const nd = Math.hypot(c.x - e.x, c.y - e.y);
+        if (nd <= NEST_R){state.enemies.splice(i,1); damage(1); continue;}
       }
     }
 
@@ -1137,7 +1172,7 @@
     // Pixelated spiderweb background
     {
       const c = CENTER();
-      ctx.globalAlpha = 0.5;
+      ctx.globalAlpha = 0.35;
       // Concentric rings
       const maxR = Math.max(
         Math.hypot(c.x, c.y),
