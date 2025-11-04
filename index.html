@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SPIDER STRIKE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+  
+  :root{
+    --bg:#0a0014; --ink:#000000; --muted:#333333;
+    --neon:#ff4500; --ok:#000000; --warn:#ffff00; --bad:#ff3131;
+    --grid:#330044;
+  }
+  *{box-sizing:border-box}
+  
+  html,body{
+    height:100%;width:100%;margin:0;padding:0;background:#000;
+    color:var(--ink);font-family:'VT323',monospace;font-size:20px;
+    image-rendering:pixelated;image-rendering:crisp-edges;overflow:hidden;
+  }
+  
+  .wrap{
+    position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;
+    background:linear-gradient(180deg, #0a0014 0%, #14001e 100%);
+    border:4px solid #ff006e;box-shadow:inset 0 0 80px #ff006e40;
+  }
+  
+  .wrap::before {
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15) 1px,transparent 1px,transparent 2px);
+    pointer-events:none;z-index:1000;animation:scanline 8s linear infinite;
+  }
+  
+  @keyframes scanline {
+    0%{transform:translateY(0)} 100%{transform:translateY(4px)}
+  }
+  
+  @keyframes flicker {
+    0%,100%{opacity:1} 50%{opacity:0.96}
+  }
+  
+  header,footer{
+    display:flex;align-items:center;gap:.6rem;padding:.5rem 1rem;
+    background:#000;border:3px solid #ff006e;text-shadow:0 0 8px currentColor;
+  }
+  
+  header{justify-content:space-between;user-select:none;animation:flicker 0.15s infinite;}
+  
+  .brand{
+    letter-spacing:.15em;font-size:1.4em;color:var(--neon);
+    text-shadow:0 0 10px var(--neon),0 0 20px var(--neon),2px 2px 0 #000;
+  }
+  
+  .hud{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  
+  .pill{
+    padding:.3rem .6rem;border:2px solid var(--ok);background:#000;font-size:1em;
+    color:var(--ok);text-shadow:0 0 6px var,--ok);box-shadow:inset 0 0 8px var(--ok)40;
+    position:relative;transition:transform 0.1s;
+  }
+  
+  .btn{
+    appearance:none;border:3px solid var(--neon);background:#000;color:var(--neon);
+    padding:.3rem .7rem;cursor:pointer;font-family:'VT323',monospace;font-size:1em;
+    text-shadow:0 0 6px var(--neon);transition:all 0.1s;
+  }
+  
+  .btn:hover{background:var(--neon);color:#000;box-shadow:0 0 20px var(--neon);}
+  .btn:active{transform:scale(0.95);}
+  
+  #gameContainer{position:relative;width:100%;height:100%;overflow:hidden;}
+  
+  canvas{
+    display:block;width:100%;height:100%;image-rendering:pixelated;
+    image-rendering:crisp-edges;cursor:crosshair;filter:contrast(1.1);
+  }
+  
+  footer{justify-content:center;color:var(--muted);font-size:1em;user-select:none;}
+  
+  .overlay{
+    position:absolute;inset:0;display:none;place-items:center;
+    background:radial-gradient(circle,#00000090,#000000e0);z-index:999;
+  }
+  
+  .card{
+    background:#000;border:4px solid var(--neon);
+    box-shadow:0 0 40px var,--neon),inset 0 0 20px var(--neon)40;
+    padding:20px 25px;max-width:min(92vw,620px);text-align:center;
+  }
+  
+  .card h2{
+    margin:.2rem 0 0;font-size:2em;letter-spacing:.12em;color:var(--neon);
+    text-shadow:0 0 10px var,--neon),0 0 20px var,--neon);
+  }
+  
+  .card p{margin:.8rem 0 1.2rem;color:var(--ok);line-height:1.4;}
+  
+  .kbd{
+    border:2px solid var(--ok);background:#000;padding:.3rem .5rem;
+    color:var(--ok);text-shadow:0 0 6px var,--ok);
+  }
+  
+  .nukeBtn{
+    padding:.3rem .7rem;border-color:var(--warn);color:var(--warn);
+    text-shadow:0 0 6px var(--warn);
+  }
+  
+  .nukeBtn:hover{background:var(--warn);color:#000;box-shadow:0 0 20px var(--warn);}
+  
+  .charge{
+    width:72px;height:8px;background:#001100;border:2px solid var(--ok);overflow:hidden;
+  }
+  
+  .charge>i{
+    display:block;height:100%;background:var(--warn);box-shadow:0 0 8px var,--warn);width:0%;
+  }
+  
+  .small{font-size:.9em;color:var(--muted);}
+  
+  .flyingScore{
+    position:absolute;font-family:'VT323',monospace;font-size:28px;
+    color:var(--ok);text-shadow:0 0 10px var,--ok),0 0 20px var,--ok);
+    pointer-events:none;z-index:100;font-weight:bold;
+  }
+  
+  .soundToggle{
+    position:fixed;bottom:12px;right:12px;z-index:1001;
+    padding:.4rem .7rem;border:2px solid var(--ok);background:#000;
+    color:var(--ok);font-family:'VT323',monospace;font-size:1em;
+    cursor:pointer;text-shadow:0 0 6px var,--ok);
+  }
+  
+  .soundToggle:hover{background:var(--ok);color:#000;}
+  
+  body::after{
+    content:"";position:fixed;inset:0;
+    background:radial-gradient(ellipse at center,transparent 0%,rgba(0,0,0,0.3) 100%);
+    pointer-events:none;z-index:999;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">? SPIDER STRIKE ?</div>
+    <div class="hud">
+      <div class="pill" id="scorePill">SCR:<span id="score">0</span></div>
+      <div class="pill">HP:<span id="lives">10</span></div>
+      <div class="pill">SLK:<span id="silk">50</span></div>
+      <div class="pill">CST:<span id="cost">25</span></div>
+      <div class="pill">WV:<span id="wave">1</span></div>
+      <div class="pill">SPD:<span id="speed">1×</span></div>
+      <div class="pill small" style="display:flex;flex-direction:column;align-items:center;padding:.2rem .5rem">
+        <div style="font-size:.8rem">NUKE</div>
+        <div class="charge"><i id="chargeBar"></i></div>
+      </div>
+      <button id="restart" class="btn">[R]</button>
+      <button id="nukeBtn" class="btn nukeBtn" disabled>[N]</button>
+    </div>
+  </header>
+
+  <div id="gameContainer"><canvas id="game"></canvas></div>
+
+  <footer>? CLICK TO DEPLOY WEB NODES ? [R]ESTART ? [N]UKE ? [+]/[-]SPEED ?</footer>
+
+  <div id="overlay" class="overlay">
+    <div class="card">
+      <h2 id="ovTitle">SPIDER STRIKE</h2>
+      <p id="ovMsg" class="small">
+        DEPLOY WEB NODES TO SLOW ENEMIES<br>
+        NODES WEAR DOWN WITH TRAFFIC<br>
+        ENEMIES DIE IF STUCK TOO LONG<br>
+        SOME RESIST WEBS - SOME RESIST NUKES
+      </p>
+      <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
+        <span class="kbd">CLICK</span><span class="kbd">R</span><span class="kbd">N</span><span class="kbd">+</span><span class="kbd">-</span>
+      </div>
+      <div style="display:flex;gap:.6rem;justify-content:center">
+        <button id="startBtn" class="btn">? START</button>
+        <button id="howBtn" class="btn">? INFO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button id="soundToggle" class="soundToggle">?? SFX ON</button>
+
+<script>
+(() => {
+  "use strict";
+  
+  /*** SPIDER SPRITE ***/
+  const SPIDER_SVG_DATAURI =
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(`<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .o{fill:#0c0c12;stroke:#ff2136;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .g{fill:rgba(255,33,54,0.22)}
+      .w{stroke:rgba(255,255,255,0.35);stroke-width:1;stroke-linecap:round}
+    </style>
+  </defs>
+
+  <!-- FRAME 0 (x:0..31) -->
+  <g transform="translate(0,0)">
+    <!-- soft glow -->
+    <circle cx="16" cy="16" r="7" class="g"/>
+    <!-- abdomen + cephalothorax -->
+    <ellipse cx="16" cy="16" rx="7" ry="5" class="o"/>
+    <ellipse cx="12.5" cy="16" rx="3.5" ry="3" class="o"/>
+
+    <!-- legs left -->
+    <path d="M13 14 C5 10, 5 22, 10 22" class="o"/>
+    <path d="M13 18 C6 16, 6 24, 11 24" class="o"/>
+    <path d="M14 12 C7 8, 7 14, 10 16" class="o"/>
+    <!-- legs right -->
+    <path d="M19 14 C27 10, 27 22, 22 22" class="o"/>
+    <path d="M19 18 C26 16, 26 24, 21 24" class="o"/>
+    <path d="M18 12 C25 8, 25 14, 22 16" class="o"/>
+
+    <!-- little fangs highlight -->
+    <path d="M10 16 l-2 1" class="w"/>
+    <path d="M10 16 l-2 -1" class="w"/>
+  </g>
+
+  <!-- FRAME 1 (x:32..63) -->
+  <g transform="translate(32,0)">
+    <!-- soft glow -->
+    <circle cx="16" cy="16" r="7" class="g"/>
+    <!-- abdomen + cephalothorax -->
+    <ellipse cx="16" cy="16" rx="7" ry="5" class="o"/>
+    <ellipse cx="12.5" cy="16" rx="3.5" ry="3" class="o"/>
+
+    <!-- legs shifted (crawl) -->
+    <!-- legs left -->
+    <path d="M13 14 C6 9, 6 15, 9 17" class="o"/>
+    <path d="M13 18 C5 20, 6 26, 12 25" class="o"/>
+    <path d="M14 12 C8 10, 6 12, 9 14" class="o"/>
+    <!-- legs right -->
+    <path d="M19 14 C26 9, 26 15, 23 17" class="o"/>
+    <path d="M19 18 C27 20, 26 26, 20 25" class="o"/>
+    <path d="M18 12 C24 10, 26 12, 23 14" class="o"/>
+
+    <!-- little fangs highlight -->
+    <path d="M10 16 l-2 1" class="w"/>
+    <path d="M10 16 l-2 -1" class="w"/>
+  </g>
+</svg>`);
+
+  const spiderImg = new Image();
+  spiderImg.decoding = 'async';
+  spiderImg.src = SPIDER_SVG_DATAURI;
+
+  // Spider animation state
+  const spiderAnim = { t: 0, frame: 0, w: 32, h: 32, speedMs: 140 };
+
+  function drawSpiderSprite(ctx, x, y, scale = 1) {
+    // advance animation (toggle frames every speedMs)
+    const now = performance.now();
+    if (!spiderAnim.t) spiderAnim.t = now;
+    if (now - spiderAnim.t > spiderAnim.speedMs) {
+      spiderAnim.t = now;
+      spiderAnim.frame = (spiderAnim.frame + 1) % 2; // 0 or 1
+    }
+    const sx = spiderAnim.frame * spiderAnim.w; // source x on sheet
+    const sy = 0;
+
+    const dw = spiderAnim.w * scale;
+    const dh = spiderAnim.h * scale;
+    // draw centered at (x,y)
+    ctx.drawImage(
+      spiderImg,
+      sx, sy, spiderAnim.w, spiderAnim.h,
+      Math.round(x - dw/2), Math.round(y - dh/2),
+      Math.round(dw), Math.round(dh)
+    );
+  }
+
+  function flashSpider(ctx, x, y, scale = 0.6) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.5;
+    drawSpiderSprite(ctx, x, y, scale);
+    ctx.restore();
+  }
+  
+  /*** ENEMY SPRITES ***/
+  function makeDataURI(svg) {
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
+  const SPRITE_SHEETS = {
+    gnat: makeDataURI(`<?xml version="1.0"?>
+<svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .o{fill:#0c0c12;stroke:#00ffff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(0,255,255,0.16)}
+      .g{fill:rgba(255,255,255,0.06)}
+    </style>
+  </defs>
+  <!-- GNAT: tiny flyer with wings -->
+  <!-- Frame 0 -->
+  <g transform="translate(0,0)">
+    <circle cx="16" cy="16" r="8" class="g"/>
+    <!-- wings -->
+    <ellipse cx="14" cy="12" rx="6" ry="3.5" class="w"/>
+    <ellipse cx="20" cy="12" rx="6" ry="3.5" class="w"/>
+    <!-- body -->
+    <ellipse cx="16" cy="16" rx="6" ry="4.5" class="o"/>
+    <ellipse cx="12.5" cy="16" rx="3" ry="2.5" class="o"/>
+    <!-- legs -->
+    <path d="M18 18 l 5 4" class="o"/>
+    <path d="M14 18 l -5 4" class="o"/>
+  </g>
+  <!-- Frame 1 -->
+  <g transform="translate(32,0)">
+    <circle cx="16" cy="16" r="8" class="g"/>
+    <!-- wings flutter -->
+    <ellipse cx="13" cy="13" rx="7" ry="3" class="w"/>
+    <ellipse cx="21" cy="11.5" rx="5.5" ry="2.8" class="w"/>
+    <!-- body -->
+    <ellipse cx="16" cy="16" rx="6" ry="4.5" class="o"/>
+    <ellipse cx="12.5" cy="16" rx="3" ry="2.5" class="o"/>
+    <!-- legs alt -->
+    <path d="M18 18 l 6 2" class="o"/>
+    <path d="M14 18 l -6 2" class="o"/>
+  </g>
+</svg>`),
+
+    beetle: makeDataURI(`<?xml version="1.0"?>
+<svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .o{fill:#0c0c12;stroke:#ffff00;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .s{fill:#0c0c12;stroke:#ffff00;stroke-width:1.2}
+      .g{fill:rgba(255,255,0,0.12)}
+    </style>
+  </defs>
+  <!-- BEETLE: chunky shell, slow, web-resistant -->
+  <!-- Frame 0 -->
+  <g transform="translate(0,0)">
+    <circle cx="16" cy="16" r="9" class="g"/>
+    <!-- elytra split -->
+    <path d="M10,12 q6,-4 12,0 v8 q-6,4 -12,0 z" class="o"/>
+    <line x1="16" y1="12" x2="16" y2="20" class="s"/>
+    <!-- head -->
+    <ellipse cx="11" cy="16" rx="3" ry="2.6" class="o"/>
+    <!-- legs -->
+    <path d="M12 13 l -6 2" class="o"/>
+    <path d="M12 16 l -6 0" class="o"/>
+    <path d="M12 19 l -6 -2" class="o"/>
+    <path d="M20 13 l 6 2" class="o"/>
+    <path d="M20 16 l 6 0" class="o"/>
+    <path d="M20 19 l 6 -2" class="o"/>
+  </g>
+  <!-- Frame 1 -->
+  <g transform="translate(32,0)">
+    <circle cx="16" cy="16" r="9" class="g"/>
+    <!-- elytra sway -->
+    <path d="M10,12 q6,-4 12,0 v8 q-6,4 -12,0 z" class="o"/>
+    <line x1="16" y1="12" x2="16" y2="20" class="s"/>
+    <!-- head -->
+    <ellipse cx="11" cy="16" rx="3.2" ry="2.4" class="o"/>
+    <!-- legs alt stance -->
+    <path d="M12 13 l -5 3" class="o"/>
+    <path d="M12 16 l -6 1" class="o"/>
+    <path d="M12 19 l -5 -3" class="o"/>
+    <path d="M20 13 l 5 3" class="o"/>
+    <path d="M20 16 l 6 1" class="o"/>
+    <path d="M20 19 l 5 -3" class="o"/>
+  </g>
+</svg>`),
+
+    roach: makeDataURI(`<?xml version="1.0"?>
+<svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .o{fill:#0c0c12;stroke:#ff8800;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .a{stroke:#ff8800;stroke-width:1.2;stroke-linecap:round}
+      .g{fill:rgba(255,136,0,0.10)}
+    </style>
+  </defs>
+  <!-- ROACH: long body, antennae, nuke-immune -->
+  <!-- Frame 0 -->
+  <g transform="translate(0,0)">
+    <ellipse cx="16" cy="16" rx="9" ry="5" class="g"/>
+    <ellipse cx="16" cy="16" rx="8" ry="4.5" class="o"/>
+    <ellipse cx="11.8" cy="16" rx="3" ry="2.4" class="o"/>
+    <!-- antennae -->
+    <path d="M10 15 q -5 -4, -8 -6" class="a"/>
+    <path d="M10 17 q -5  4, -8  6" class="a"/>
+    <!-- legs -->
+    <path d="M12 13 l -6 1" class="o"/>
+    <path d="M20 13 l 6 1" class="o"/>
+    <path d="M12 19 l -6 -1" class="o"/>
+    <path d="M20 19 l 6 -1" class="o"/>
+  </g>
+  <!-- Frame 1 -->
+  <g transform="translate(32,0)">
+    <ellipse cx="16" cy="16" rx="9" ry="5" class="g"/>
+    <ellipse cx="16" cy="16" rx="8" ry="4.5" class="o"/>
+    <ellipse cx="11.6" cy="16" rx="3" ry="2.4" class="o"/>
+    <!-- antennae sway -->
+    <path d="M10 15 q -6 -3, -9 -4" class="a"/>
+    <path d="M10 17 q -6  3, -9  4" class="a"/>
+    <!-- legs alt -->
+    <path d="M12 13 l -5 2" class="o"/>
+    <path d="M20 13 l 5 2" class="o"/>
+    <path d="M12 19 l -5 -2" class="o"/>
+    <path d="M20 19 l 5 -2" class="o"/>
+  </g>
+</svg>`),
+
+    wasp: makeDataURI(`<?xml version="1.0"?>
+<svg width="64" height="32" viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .o{fill:#0c0c12;stroke:#ff0044;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .w{fill:rgba(255,0,68,0.14)}
+      .y{stroke:#ffcc33;stroke-width:1.2}
+      .g{fill:rgba(255,255,255,0.05)}
+    </style>
+  </defs>
+  <!-- WASP: fast, striped abdomen, stinger -->
+  <!-- Frame 0 -->
+  <g transform="translate(0,0)">
+    <circle cx="16" cy="16" r="8" class="g"/>
+    <!-- wings -->
+    <ellipse cx="14" cy="12" rx="6.5" ry="3" class="w"/>
+    <ellipse cx="20" cy="12" rx="6.5" ry="3" class="w"/>
+    <!-- thorax/abdomen -->
+    <ellipse cx="16" cy="16" rx="6.5" ry="4.2" class="o"/>
+    <path d="M13 16 h6" class="y"/>
+    <path d="M13 18 h6" class="y"/>
+    <!-- head -->
+    <ellipse cx="11.8" cy="16" rx="2.8" ry="2.4" class="o"/>
+    <!-- stinger -->
+    <path d="M22 16 l 4 0" class="o"/>
+  </g>
+  <!-- Frame 1 -->
+  <g transform="translate(32,0)">
+    <circle cx="16" cy="16" r="8" class="g"/>
+    <!-- wings tilt -->
+    <ellipse cx="13" cy="11.5" rx="6.8" ry="2.6" class="w"/>
+    <ellipse cx="21" cy="12.5" rx="6.0" ry="2.4" class="w"/>
+    <!-- thorax/abdomen -->
+    <ellipse cx="16" cy="16" rx="6.5" ry="4.2" class="o"/>
+    <path d="M13 16 h6" class="y"/>
+    <path d="M13 18 h6" class="y"/>
+    <!-- head -->
+    <ellipse cx="12.0" cy="16" rx="2.6" ry="2.2" class="o"/>
+    <!-- stinger -->
+    <path d="M22 16 l 4.5 0" class="o"/>
+  </g>
+</svg>`)
+  };
+
+  // Preload enemy sprite images
+  const EnemySprites = {};
+  for (const [key, uri] of Object.entries(SPRITE_SHEETS)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = uri;
+    EnemySprites[key] = img;
+  }
+
+  // Enemy animation state (shared across all enemies)
+  const EnemyAnim = {
+    w: 32, h: 32,
+    speedMs: 120,
+    last: 0, frame: 0
+  };
+
+  function stepEnemyAnim(now) {
+    if (!EnemyAnim.last) EnemyAnim.last = now;
+    if (now - EnemyAnim.last > EnemyAnim.speedMs) {
+      EnemyAnim.last = now;
+      EnemyAnim.frame = (EnemyAnim.frame + 1) % 2;
+    }
+  }
+
+  // Scale by enemy type to match visual size
+  const SCALE_BY_TYPE = {
+    gnat: 0.28,
+    beetle: 0.32,
+    roach: 0.30,
+    wasp: 0.30
+  };
+
+  function drawEnemySprite(ctx, enemy, scale = 1) {
+    const img = EnemySprites[enemy.type?.key || 'gnat'];
+    if (!img || !img.complete) {
+      // Fallback placeholder if not loaded
+      ctx.save();
+      ctx.fillStyle = '#1b1b22';
+      ctx.strokeStyle = (enemy.type && enemy.type.color) || '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); 
+      ctx.arc(enemy.x, enemy.y, 4, 0, Math.PI*2); 
+      ctx.fill(); 
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    const sx = EnemyAnim.frame * EnemyAnim.w;
+    const sy = 0;
+    const dw = EnemyAnim.w * scale;
+    const dh = EnemyAnim.h * scale;
+    ctx.drawImage(
+      img, sx, sy, EnemyAnim.w, EnemyAnim.h,
+      Math.round(enemy.x - dw/2), Math.round(enemy.y - dh/2),
+      Math.round(dw), Math.round(dh)
+    );
+  }
+  
+  /*** SOUND SYSTEM ***/
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const sounds = {
+    enabled: true,
+    musicEnabled: true,
+    musicNode: null,
+    musicGain: null
+  };
+
+  // Resume audio context on user interaction (browser requirement)
+  function resumeAudio() {
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  // Placeholder synthesized sounds - replace with MP3 loaders later
+  function playSound(type) {
+    if (!sounds.enabled) return;
+    resumeAudio();
+    
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    switch(type) {
+      case 'webDeploy': // Node placement
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+        break;
+        
+      case 'enemyKill': // Enemy destroyed
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+        
+      case 'damage': // Player takes damage
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+        
+      case 'scorePoint': // Score flies to board
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
+        
+      case 'scoreCollect': // Score reaches board
+        osc.frequency.setValueAtTime(1200, now);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+        
+      case 'nuke': // Nuclear explosion
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        osc.start(now);
+        osc.stop(now + 0.6);
+        // Add second layer
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(200, now);
+        osc2.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+        gain2.gain.setValueAtTime(0.2, now);
+        gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc2.start(now);
+        osc2.stop(now + 0.5);
+        break;
+        
+      case 'waveStart': // New wave begins
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.15);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+        
+      case 'waveComplete': // Wave cleared
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+        break;
+        
+      case 'nukeCharged': // Nuke ready
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+        break;
+        
+      case 'gameOver': // Death
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.8);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+        osc.start(now);
+        osc.stop(now + 1);
+        break;
+        
+      case 'button': // UI button click
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+    }
+  }
+
+  // Background music - placeholder loop
+  // Replace this entire function with MP3 loader
+  function startMusic() {
+    if (!sounds.musicEnabled || sounds.musicNode) return;
+    resumeAudio();
+    
+    // Create a simple repeating melody as placeholder
+    // REPLACE THIS WITH: const audio = new Audio('path/to/music.mp3'); audio.loop = true; audio.play();
+    const now = audioCtx.currentTime;
+    
+    // Create gain node for music volume control
+    sounds.musicGain = audioCtx.createGain();
+    sounds.musicGain.gain.setValueAtTime(0.05, now); // Low volume for bg music
+    sounds.musicGain.connect(audioCtx.destination);
+    
+    // Simple placeholder - replace with actual MP3
+    function playMelodyNote(freq, startTime, duration) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(sounds.musicGain);
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.03, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+    
+    // Placeholder melody loop (replace with MP3)
+    const melody = [440, 494, 523, 494, 440, 392, 349, 392];
+    let time = audioCtx.currentTime;
+    
+    function scheduleMelody() {
+      if (!sounds.musicEnabled) return;
+      melody.forEach((freq, i) => {
+        playMelodyNote(freq, time + i * 0.3, 0.25);
+      });
+      time += melody.length * 0.3;
+      setTimeout(scheduleMelody, (melody.length * 0.3) * 1000);
+    }
+    
+    scheduleMelody();
+    sounds.musicNode = true; // Placeholder flag
+  }
+
+  function stopMusic() {
+    // REPLACE WITH: if (audio) { audio.pause(); audio.currentTime = 0; }
+    sounds.musicNode = null;
+    if (sounds.musicGain) {
+      sounds.musicGain.disconnect();
+      sounds.musicGain = null;
+    }
+  }
+
+  // Sound toggle button
+  const soundToggle = document.getElementById('soundToggle');
+  soundToggle.addEventListener('click', () => {
+    sounds.enabled = !sounds.enabled;
+    sounds.musicEnabled = !sounds.musicEnabled;
+    soundToggle.textContent = sounds.enabled ? '?? SFX ON' : '?? SFX OFF';
+    if (sounds.musicEnabled && state.running) {
+      startMusic();
+    } else {
+      stopMusic();
+    }
+    playSound('button');
+  });
+
+  /*** CANVAS ***/
+  const canvas = document.getElementById('game');
+  const gameContainer = document.getElementById('gameContainer');
+  const ctx = canvas.getContext('2d', {alpha:false});
+  const PIXEL_SCALE = 3;
+  
+  function resize(){ 
+    const rect = gameContainer.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width / PIXEL_SCALE);
+    canvas.height = Math.floor(rect.height / PIXEL_SCALE);
+  }
+  addEventListener('resize', resize, {passive:true}); 
+  resize();
+  ctx.imageSmoothingEnabled = false;
+
+  const elScore = document.getElementById('score');
+  const elLives = document.getElementById('lives');
+  const elSilk = document.getElementById('silk');
+  const elCost = document.getElementById('cost');
+  const elWave = document.getElementById('wave');
+  const elSpeed = document.getElementById('speed');
+  const restartBtn = document.getElementById('restart');
+  const chargeBar = document.getElementById('chargeBar');
+  const nukeBtn = document.getElementById('nukeBtn');
+  const scorePill = document.getElementById('scorePill');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const startBtn = document.getElementById('startBtn');
+  const howBtn = document.getElementById('howBtn');
+
+  const CENTER = () => ({x: canvas.width/2, y: canvas.height/2});
+  const NEST_R = 10;
+  const START_LIVES = 10, START_SILK = 50, SILK_MAX = 240, SILK_REGEN = 6;
+  const NODE_COST = 25, NODE_R = 28, NODE_SLOW = 0.55, NODE_FADE = 0.35, NODE_DUR0 = 100, NODE_DECAY_PER_ENEMY = 7;
+  const ENEMY_BASE = 8, ENEMY_HP0 = 10, ENEMY_SPEED0 = 0.025;
+  const WAVE_GAP_MS = 3500, SPAWN_BURST = 180, SPEEDS = [1, 1.5, 2, 3], STUCK_KILL_MS = 2500;
+  const NUKE_CHARGE_MAX = 100, NUKE_SCORE_PER_KILL = 8, NUKE_SILK_PER_KILL = 3;
+
+  const COLORS = {
+    bg:'#0a0014', grid:'#1a0028', nest:'#ff006e', nestCore:'#000',
+    node:'#00ff41', nodeDim:'#007a20', web:'#00ff4140', particle:'#ff006e'
+  };
+
+  const TYPES = [
+    {key:'gnat', name:'GNAT', color:'#00ffff', hp:ENEMY_HP0+0, speed:ENEMY_SPEED0*1.25, webResist:0.00, nukeImmune:false, stuckMult:1.0},
+    {key:'beetle', name:'BEETLE', color:'#ffff00', hp:ENEMY_HP0+8, speed:ENEMY_SPEED0*0.85, webResist:0.60, nukeImmune:false, stuckMult:1.6},
+    {key:'roach', name:'ROACH', color:'#ff8800', hp:ENEMY_HP0+4, speed:ENEMY_SPEED0*1.00, webResist:0.20, nukeImmune:true, stuckMult:1.2},
+    {key:'wasp', name:'WASP', color:'#ff0044', hp:ENEMY_HP0+6, speed:ENEMY_SPEED0*1.35, webResist:0.30, nukeImmune:false, stuckMult:1.1}
+  ];
+
+  function pickType(wave){
+    const wGnat = Math.max(1, 6 - Math.floor(wave/3));
+    const wBeet = Math.min(5, 1 + Math.floor(wave/4));
+    const wRoach = Math.min(4, Math.floor(wave/5));
+    const wWasp = Math.min(5, Math.floor(wave/3));
+    const bag = [...Array(wGnat).fill('gnat'), ...Array(wBeet).fill('beetle'),
+                 ...Array(wRoach).fill('roach'), ...Array(wWasp).fill('wasp')];
+    const key = bag[Math.floor(Math.random()*bag.length)];
+    return TYPES.find(t=>t.key===key) || TYPES[0];
+  }
+
+  const state = {
+    running:false, t:0, dt:0, last:performance.now(),
+    speedIndex:0, score:0, lives:START_LIVES, silk:START_SILK,
+    wave:1, inWave:false, nextWaveAt:0, toSpawn:0, spawnTimer:0,
+    enemies:[], nodes:[], particles:[], shake:0,
+    spiderFlash:0 // flash timer for damage
+  };
+  state.nukeCharge = 0; state.nukeReady = false;
+
+  function reset(full=true){
+    state.running=false; state.t=0; state.dt=0; state.last=performance.now();
+    state.speedIndex=0; state.score=0; state.lives=START_LIVES; state.silk=START_SILK;
+    state.wave=1; state.inWave=false; state.nextWaveAt=0; state.toSpawn=0; state.spawnTimer=0;
+    state.enemies.length=0; state.nodes.length=0; state.particles.length=0; state.shake=0;
+    state.nukeCharge=0; state.nukeReady=false; state.spiderFlash=0;
+    if (full){
+      elScore.textContent=state.score; elLives.textContent=state.lives;
+      elSilk.textContent=Math.floor(state.silk); elCost.textContent=NODE_COST;
+      elWave.textContent=state.wave; elSpeed.textContent=SPEEDS[state.speedIndex]+'×';
+      chargeBar.style.width='0%'; nukeBtn.disabled=true;
+    }
+    stopMusic();
+  }
+  reset();
+
+  function createFlyingScore(worldX, worldY, points) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const screenX = canvasRect.left + (worldX / canvas.width) * canvasRect.width;
+    const screenY = canvasRect.top + (worldY / canvas.height) * canvasRect.height;
+    const scoreRect = scorePill.getBoundingClientRect();
+    const targetX = scoreRect.left + scoreRect.width / 2;
+    const targetY = scoreRect.top + scoreRect.height / 2;
+    
+    const scoreEl = document.createElement('div');
+    scoreEl.className = 'flyingScore';
+    scoreEl.textContent = '+' + points;
+    scoreEl.style.left = screenX + 'px';
+    scoreEl.style.top = screenY + 'px';
+    document.body.appendChild(scoreEl);
+    
+    playSound('scorePoint'); // Sound when score launches
+    
+    const duration = 800, startTime = performance.now();
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime, progress = Math.min(elapsed / duration, 1);
+      const eased = progress < 0.5 ? 2*progress*progress : 1-Math.pow(-2*progress+2,2)/2;
+      const currentX = screenX + (targetX - screenX) * eased;
+      const currentY = screenY + (targetY - screenY) * eased;
+      scoreEl.style.left = currentX + 'px';
+      scoreEl.style.top = currentY + 'px';
+      scoreEl.style.opacity = (1 - progress * 0.3).toString();
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        scoreEl.remove();
+        playSound('scoreCollect'); // Sound when score arrives
+        scorePill.style.transform = 'scale(1.15)';
+        scorePill.style.transition = 'transform 0.1s';
+        setTimeout(() => { scorePill.style.transform = 'scale(1)'; }, 100);
+      }
+    };
+    requestAnimationFrame(animate);
+  }
+
+  function canvasToWorld(ev){ 
+    const r = canvas.getBoundingClientRect(); 
+    return {x: (ev.clientX - r.left) * (canvas.width / r.width), y: (ev.clientY - r.top) * (canvas.height / r.height)}; 
+  }
+  
+  canvas.addEventListener('pointerdown', e=>{
+    if(!state.running) return; 
+    const p=canvasToWorld(e); 
+    placeNode(p.x,p.y);
+  });
+  
+  addEventListener('keydown', e=>{
+    if (e.key==='r'||e.key==='R'){playSound('button'); showOverlay('SPIDER STRIKE','SYSTEM REBOOT - REINFORCE NEST', true);}
+    if (e.key==='+'){playSound('button'); changeSpeed(1);}
+    if (e.key==='-'){playSound('button'); changeSpeed(-1);}
+    if ((e.key==='n'||e.key==='N') && state.nukeReady){nuke();}
+  });
+  
+  restartBtn.addEventListener('click',()=>{playSound('button'); showOverlay('SPIDER STRIKE','SYSTEM REBOOT - REINFORCE NEST', true);});
+  nukeBtn.addEventListener('click', ()=>{if (state.nukeReady) nuke();});
+  startBtn.addEventListener('click', ()=>{playSound('button'); overlay.style.display='none'; start();});
+  howBtn.addEventListener('click', ()=>{
+    playSound('button');
+    ovTitle.textContent='? INFO ?';
+    ovMsg.innerHTML = `
+      <b>GOAL:</b> PROTECT CENTER NEST<br>
+      <b>NODES:</b> CLICK TO DEPLOY STICKY WEB<br>
+      NODES WEAR DOWN AS ENEMIES PASS<br>
+      <b>STUCK KILL:</b> SLOWED ENEMIES DIE AFTER ${(STUCK_KILL_MS/1000).toFixed(1)}S<br>
+      <b>TYPES:</b> BEETLES RESIST WEBS<br>
+      ROACHES IMMUNE TO NUKES<br>
+      WASPS ARE FAST<br>
+      <b>NUKE:</b> CHARGE BY SURVIVING WAVES
+    `;
+  });
+
+  function showOverlay(title,msg,doReset=false){
+    ovTitle.textContent=title; ovMsg.innerHTML=msg; overlay.style.display='grid'; state.running=false; if (doReset) reset();
+  }
+  
+  function start(){
+    reset(false); 
+    state.running=true; 
+    state.last=performance.now(); 
+    state.nextWaveAt=state.t+800; 
+    startMusic(); // Start background music
+    requestAnimationFrame(loop);
+  }
+  
+  function changeSpeed(d){state.speedIndex=Math.max(0,Math.min(SPEEDS.length-1,state.speedIndex+d)); elSpeed.textContent=SPEEDS[state.speedIndex]+'×';}
+
+  function scheduleWave(){
+    state.inWave=true; 
+    state.toSpawn=Math.round(ENEMY_BASE+(state.wave-1)*3.5); 
+    state.spawnTimer=0;
+    playSound('waveStart'); // Wave start sound
+  }
+  
+  function spawnEnemy(){
+    const side = Math.floor(Math.random()*4); let x,y;
+    if (side===0){x=Math.random()*canvas.width; y=-10;}
+    else if (side===1){x=canvas.width+10; y=Math.random()*canvas.height;}
+    else if (side===2){x=Math.random()*canvas.width; y=canvas.height+10;}
+    else {x=-10; y=Math.random()*canvas.height;}
+    const t = pickType(state.wave);
+    const speed = (t.speed + 0.002*(state.wave-1)) * (0.9 + Math.random()*0.25);
+    const hp = Math.round(t.hp + 0.6*(state.wave-1));
+    state.enemies.push({x,y, hp, speed, slow:1, stuckTimer:0, type:t, stun:0});
+  }
+
+  function placeNode(x,y){
+    if (state.silk < NODE_COST) return;
+    const c = CENTER(); const d = Math.hypot(x-c.x, y-c.y);
+    if (d < NEST_R + 10) return;
+    state.silk = Math.max(0, state.silk - NODE_COST); elSilk.textContent=Math.floor(state.silk);
+    state.nodes.push({x,y, r:NODE_R, t:state.t, dur:NODE_DUR0});
+    state.shake = 3;
+    playSound('webDeploy'); // Web deployment sound
+  }
+
+  function addScore(n, worldX, worldY){ 
+    state.score += n; 
+    elScore.textContent = state.score;
+    if (worldX !== undefined && worldY !== undefined) {
+      createFlyingScore(worldX, worldY, n);
+    }
+  }
+  
+  function damage(n){ 
+    state.lives -= n; 
+    elLives.textContent=Math.max(0,state.lives); 
+    state.shake = 8;
+    state.spiderFlash = 300; // Flash spider for 300ms
+    playSound('damage'); // Damage sound
+    if(state.lives<=0) gameOver(); 
+  }
+
+  const particles = state.particles;
+  function emitBurst(x,y, baseColor, count=12){
+    for (let i=0;i<count;i++){
+      const a = Math.random()*Math.PI*2, sp = 0.5 + Math.random()*1.8;
+      particles.push({x,y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0, max: 280 + Math.random()*200,
+        size: 1 + Math.random()*2, color: baseColor || COLORS.particle});
+    }
+  }
+  function updateParticles(dt){
+    for (let i=particles.length-1;i>=0;i--){
+      const p=particles[i]; p.life += dt; p.x += p.vx*dt*0.06; p.y += p.vy*dt*0.06;
+      p.vx *= 0.99; p.vy *= 0.99;
+      if (p.life >= p.max) particles.splice(i,1);
+    }
+  }
+  function drawParticles(){
+    for (const p of particles){
+      const a = 1 - (p.life / p.max);
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = p.color;
+      const s = Math.ceil(p.size);
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), s, s);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function nuke(){
+    const center = CENTER();
+    let killed = 0;
+    for (let i=state.enemies.length-1;i>=0;i--){
+      const e = state.enemies[i];
+      if (e.type.nukeImmune){
+        const vx = e.x - center.x, vy = e.y - center.y; const d = Math.hypot(vx,vy)||1;
+        const ux=vx/d, uy=vy/d;
+        e.x += ux * 20; e.y += uy * 20;
+        e.stun = 500;
+        continue;
+      }
+      emitBurst(e.x, e.y, e.type.color, 18);
+      createFlyingScore(e.x, e.y, NUKE_SCORE_PER_KILL);
+      state.enemies.splice(i,1); killed++;
+    }
+    if (killed>0){
+      state.score += killed * NUKE_SCORE_PER_KILL;
+      elScore.textContent = state.score;
+      state.silk = Math.min(SILK_MAX, state.silk + killed * NUKE_SILK_PER_KILL);
+      elSilk.textContent = Math.floor(state.silk);
+    }
+    state.nukeCharge = 0; state.nukeReady=false; chargeBar.style.width='0%'; nukeBtn.disabled=true;
+    state.shake = 15;
+    playSound('nuke'); // Nuke explosion sound
+
+    const start = performance.now(), dur = 400;
+    const flashAnim = (t)=>{
+      const p=(t-start)/dur; if (p>=1) return;
+      ctx.save(); ctx.globalAlpha = (1-p) * 0.4;
+      ctx.fillStyle='#ffff00';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      requestAnimationFrame(flashAnim);
+    };
+    requestAnimationFrame(flashAnim);
+  }
+
+  function loop(now){
+    if (!state.running) return;
+    requestAnimationFrame(loop);
+
+    const baseDt = now - state.last; state.last = now;
+    const dt = baseDt * SPEEDS[state.speedIndex];
+    state.dt = dt; state.t += dt;
+
+    if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 0.03);
+    if (state.spiderFlash > 0) state.spiderFlash = Math.max(0, state.spiderFlash - dt);
+
+    state.silk = Math.min(SILK_MAX, state.silk + SILK_REGEN * (dt/1000)); elSilk.textContent=Math.floor(state.silk);
+
+    if (!state.inWave && state.t >= state.nextWaveAt) scheduleWave();
+    if (state.inWave && state.toSpawn > 0){
+      state.spawnTimer += dt;
+      while (state.spawnTimer > SPAWN_BURST && state.toSpawn > 0){
+        state.spawnTimer -= SPAWN_BURST; spawnEnemy(); state.toSpawn--;
+      }
+    }
+    if (state.inWave && state.toSpawn<=0 && state.enemies.length===0){
+      state.inWave=false; 
+      state.wave++; 
+      elWave.textContent=state.wave; 
+      state.nextWaveAt = state.t + WAVE_GAP_MS;
+      state.silk = Math.min(SILK_MAX, state.silk + 20 + 5*state.wave);
+      state.nukeCharge = Math.min(NUKE_CHARGE_MAX, state.nukeCharge + 28);
+      playSound('waveComplete'); // Wave complete sound
+    }
+    
+    const prevCharge = state.nukeCharge;
+    state.nukeCharge = Math.min(NUKE_CHARGE_MAX, state.nukeCharge + 0.008 * (dt/16));
+    chargeBar.style.width = (state.nukeCharge/NUKE_CHARGE_MAX*100).toFixed(1) + '%';
+    
+    if (state.nukeCharge >= NUKE_CHARGE_MAX && !state.nukeReady){
+      state.nukeReady=true; 
+      nukeBtn.disabled=false;
+      playSound('nukeCharged'); // Nuke charged sound
+    }
+
+    const c = CENTER();
+    for (let i=state.enemies.length-1;i>=0;i--){
+      const e = state.enemies[i];
+
+      let slow = 1, heavySlow = false;
+      for (const n of state.nodes){
+        const dx=e.x-n.x, dy=e.y-n.y; const d=Math.hypot(dx,dy);
+        if (d < n.r){
+          const t = 1 - (d/n.r);
+          const s = 1 - (NODE_FADE + (NODE_SLOW - NODE_FADE) * t);
+          slow *= s;
+          if (t > 0.55) heavySlow = true;
+          n.dur -= NODE_DECAY_PER_ENEMY * (dt/1000) * (0.35 + 0.65*t);
+        }
+      }
+      slow = slow + (1 - slow) * (e.type.webResist || 0);
+      slow = Math.min(1, Math.max(0.12, slow));
+
+      const need = STUCK_KILL_MS * (e.type.stuckMult || 1);
+      if (slow < 0.75 && heavySlow) e.stuckTimer = (e.stuckTimer||0) + dt; else e.stuckTimer = Math.max(0,(e.stuckTimer||0) - dt*1.5);
+      if (e.stuckTimer >= need){
+        emitBurst(e.x, e.y, e.type.color, 14);
+        addScore(6, e.x, e.y);
+        state.silk = Math.min(SILK_MAX, state.silk + 2); elSilk.textContent=Math.floor(state.silk);
+        state.shake = 2;
+        playSound('enemyKill'); // Enemy kill sound
+        state.enemies.splice(i,1); continue;
+      }
+
+      if (e.stun>0){e.stun -= dt;} else {
+        const vx = c.x - e.x, vy = c.y - e.y; const dist = Math.hypot(vx,vy)||1;
+        const ux=vx/dist, uy=vy/dist; const step = e.speed * slow * dt; e.x += ux*step; e.y += uy*step;
+        if (dist <= NEST_R){state.enemies.splice(i,1); damage(1); continue;}
+      }
+    }
+
+    for (let i=state.nodes.length-1;i>=0;i--){if (state.nodes[i].dur <= 0) state.nodes.splice(i,1);}
+
+    updateParticles(dt);
+    render();
+  }
+
+  function render(){
+    ctx.save();
+    
+    if (state.shake > 0) {
+      const sx = (Math.random() - 0.5) * state.shake;
+      const sy = (Math.random() - 0.5) * state.shake;
+      ctx.translate(sx, sy);
+    }
+
+    // Advance enemy animation
+    stepEnemyAnim(performance.now());
+
+    ctx.fillStyle = COLORS.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = COLORS.grid;
+    ctx.lineWidth = 1;
+    const gridSize = 16;
+    for (let x = 0; x < canvas.width; x += gridSize) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += gridSize) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    const c = CENTER();
+
+    for (const n of state.nodes) {
+      const steps = 8;
+      for (let i = steps; i > 0; i--) {
+        const a = (i / steps) * 0.25;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = COLORS.web;
+        const r = (n.r / steps) * i;
+        drawPixelCircle(n.x, n.y, r, COLORS.web);
+      }
+      ctx.globalAlpha = 1;
+
+      const coreSize = 4;
+      ctx.fillStyle = COLORS.nodeDim;
+      ctx.fillRect(Math.floor(n.x - coreSize/2), Math.floor(n.y - coreSize/2), coreSize, coreSize);
+      
+      const p = Math.max(0, Math.min(1, n.dur / NODE_DUR0));
+      ctx.fillStyle = p > 0.5 ? '#00ff41' : (p > 0.25 ? '#ffff00' : '#ff3131');
+      const durSize = Math.ceil(p * 3);
+      if (durSize > 0) {
+        ctx.fillRect(Math.floor(n.x - 1), Math.floor(n.y - 6), durSize, 1);
+      }
+    }
+
+    drawParticles();
+
+    // Draw enemies with animated sprites
+    for (const e of state.enemies) {
+      // Draw sprite
+      const scale = SCALE_BY_TYPE[e.type.key] || 0.30;
+      drawEnemySprite(ctx, e, scale);
+      
+      // Stuck indicator (drawn after sprite)
+      if (e.stuckTimer && e.stuckTimer > 0) {
+        const need = STUCK_KILL_MS * (e.type.stuckMult || 1);
+        const p = Math.min(1, e.stuckTimer / need);
+        ctx.fillStyle = '#ff006e';
+        const ring = Math.floor(6 + p * 3);
+        drawPixelCircle(e.x, e.y, ring, '#ff006e', true);
+      }
+      
+      // Stun indicator (drawn after sprite)
+      if (e.stun > 0) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        drawPixelCircle(e.x, e.y, 8, '#ffffff', true);
+      }
+    }
+
+    // Nest - chunky pixel art - ALWAYS IN CENTER
+    drawPixelCircle(c.x, c.y, NEST_R * 2, COLORS.grid, false);
+    
+    // Nest body
+    ctx.fillStyle = COLORS.nestCore;
+    drawPixelCircle(c.x, c.y, NEST_R, COLORS.nestCore, false);
+    
+    // Nest outline
+    ctx.strokeStyle = COLORS.nest;
+    ctx.lineWidth = 2;
+    drawPixelCircle(c.x, c.y, NEST_R, COLORS.nest, true);
+    
+    // Animated spider sprite in center
+    ctx.save();
+    drawSpiderSprite(ctx, c.x, c.y, 0.3); // Scale 0.3 for lofi pixel size
+    
+    // Flash effect when damaged
+    if (state.spiderFlash > 0) {
+      flashSpider(ctx, c.x, c.y, 0.3);
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function drawPixelCircle(cx, cy, r, color, outlineOnly = false) {
+    if (outlineOnly) {
+      ctx.strokeStyle = color;
+      const points = [];
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+        points.push({x: Math.floor(cx + Math.cos(a) * r), y: Math.floor(cy + Math.sin(a) * r)});
+      }
+      for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function gameOver(){
+    state.running=false; 
+    overlay.style.display='grid';
+    ovTitle.textContent='? GAME OVER ?';
+    ovMsg.innerHTML = `FINAL SCORE: <b>${state.score}</b><br>WAVE: <b>${state.wave}</b><br><br>NEST DESTROYED`;
+    startBtn.textContent='? RETRY';
+    playSound('gameOver'); // Game over sound
+    stopMusic(); // Stop background music
+  }
+
+  window.__SPIDER_NUKE = nuke;
+  overlay.style.display='grid';
+})();
+</script>
+</body>
+</html>
