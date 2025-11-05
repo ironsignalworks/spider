@@ -109,6 +109,7 @@
     .charge{width:60px;height:6px}
     .soundToggle{font-size:.75em;padding:.18rem .4rem}
     footer{font-size:.85em;text-align:center}
+    .footerCenter{display:none}
   }
   }
   
@@ -145,8 +146,15 @@
     padding:.3rem .7rem;border-color:var(--warn);color:var(--warn);
     text-shadow:0 0 6px var(--warn);
   }
-  
+
   .nukeBtn:hover{background:var(--warn);color:#000;box-shadow:0 0 20px var(--warn);}
+
+  /* Flashing style when nuke is ready */
+  .nukeBtn.nukeReady{
+    animation:bannerFlash 0.7s steps(2, start) infinite;
+    box-shadow:0 0 18px var(--warn), inset 0 0 12px #ffb84d40;
+    border-color:#ff6688; color:#ff6688; text-shadow:0 0 10px #ff6688;
+  }
   
   .charge{
     width:72px;height:8px;background:#001100;border:2px solid var(--ok);overflow:hidden;
@@ -303,6 +311,19 @@
 (() => {
   "use strict";
   const DPR = (window.devicePixelRatio || 1);
+  // Light haptics for mobile (ignored on desktop)
+  function isMobile(){
+    try{
+      return (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+             (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+    }catch(e){ return false; }
+  }
+  function vibrateLight(){ if ('vibrate' in navigator && isMobile()) try{ navigator.vibrate(18); }catch(e){} }
+  function vibrateHit(intensity=1){
+    if (!('vibrate' in navigator) || !isMobile()) return;
+    const base = Math.max(20, Math.min(60, 30 * intensity));
+    try{ navigator.vibrate([base, 40, base]); }catch(e){}
+  }
   // Feature flag to enable/disable boss encounters
   const ENABLE_BOSSES = false;
 
@@ -1337,7 +1358,7 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
       elScore.textContent=state.score; elLives.textContent=state.lives;
       elSilk.textContent=Math.floor(state.silk);
       elWave.textContent=state.wave; elSpeed.textContent=SPEEDS[state.speedIndex]+'x';
-      chargeBar.style.width='0%'; nukeBtn.disabled=true;
+      chargeBar.style.width='0%'; nukeBtn.disabled=true; nukeBtn.classList.remove('nukeReady');
     }
     if (nukeBanner) nukeBanner.style.display='none';
     stopMusic();
@@ -1597,6 +1618,7 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
     state.shake = 8;
     state.spiderFlash = 300; // Flash spider for 300ms
     playSound('damage'); // Damage sound
+    vibrateHit(Math.max(1, Math.min(3, n)));
     if(state.lives<=0) gameOver(); 
   }
 
@@ -1653,6 +1675,7 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
         // Impact: spawn node, small burst, sound
         state.nodes.push({ x: s.tx, y: s.ty, r: NODE_R, t: state.t, dur: NODE_DUR0 });
         emitBurst(s.tx, s.ty, COLORS.node, 10);
+        vibrateLight();
         // Check for powerup hit (must shoot it)
         const CAPTURE_R = 18;
         for (let j = state.powerups.length - 1; j >= 0; j--) {
@@ -1732,7 +1755,7 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
     emitBurst(center.x, center.y, '#39ffd1', 70);
     // Hurt boss if present
     damageBossFromNuke();
-    state.nukeCharge = 0; state.nukeReady=false; chargeBar.style.width='0%'; nukeBtn.disabled=true;
+    state.nukeCharge = 0; state.nukeReady=false; chargeBar.style.width='0%'; nukeBtn.disabled=true; nukeBtn.classList.remove('nukeReady');
     if (nukeBanner) nukeBanner.style.display='none';
     state.shake = 28;
     playSound('nuke'); // Nuke explosion sound
@@ -1798,6 +1821,7 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
     if (state.nukeCharge >= NUKE_CHARGE_MAX && !state.nukeReady){
       state.nukeReady=true; 
       nukeBtn.disabled=false;
+      nukeBtn.classList.add('nukeReady');
       playSound('nukeCharged'); // Nuke charged sound
       if (nukeBanner) nukeBanner.style.display='block';
     }
@@ -2105,9 +2129,3 @@ function startBossMusic(){ playMusic('boss'); }function stopMusic() {
 </script>
 </body>
 </html>
-
-
-
-
-
-
