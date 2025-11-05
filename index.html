@@ -114,6 +114,7 @@
   .card h2{
     margin:.2rem 0 0;font-size:2em;letter-spacing:.12em;color:var(--neon);
     text-shadow:0 0 10px var(--neon),0 0 20px var(--neon);
+    font-family:'Still Time','VT323',monospace;
   }
   
   .card p{margin:.8rem 0 1.2rem;color:var(--ok);line-height:1.4;}
@@ -160,12 +161,24 @@
     background:radial-gradient(ellipse at center,transparent 0%,rgba(0,0,0,0.3) 100%);
     pointer-events:none;z-index:999;
   }
+
+  /* Nuke Ready Banner */
+  .nukeBanner{
+    position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);
+    padding:.4rem .8rem;border:4px solid var(--warn);background:#000;
+    color:var(--warn);text-shadow:0 0 10px var(--warn),0 0 20px var(--warn);
+    box-shadow:0 0 30px var(--warn), inset 0 0 14px #ffb84d40;
+    font-family:'Still Time','VT323',monospace;font-size:2.2em;letter-spacing:.1em;
+    z-index:1100;pointer-events:none;display:none;
+    animation:bannerFlash 0.9s steps(2, start) infinite;
+  }
+  @keyframes bannerFlash{0%{opacity:1;filter:brightness(1.2)}50%{opacity:.3;filter:brightness(.9)}100%{opacity:1;filter:brightness(1.2)}}
 </style>
 </head>
 <body>
 <div class="wrap">
     <header>
-    <div class="brand">[ SPIDER STRIKE ]</div>
+    <div class="brand">SPIDER STRIKE</div>
     <div class="hud">
       <div class="pill" id="scorePill">SCR:<span id="score">0</span></div>
       <div class="pill">HP:<span id="lives">10</span></div>
@@ -183,6 +196,7 @@
   </header>
 
   <div id="gameContainer"><canvas id="game"></canvas></div>
+  <div id="nukeBanner" class="nukeBanner" aria-live="polite">NUKE 'EM HIGH!</div>
 
   <footer>| CLICK TO DEPLOY WEB NODES | [R]ESTART | [N]UKE | [+]/[-]SPEED |</footer>
 
@@ -632,7 +646,7 @@
     }
   }
 
-  // SFX player – uses folder assets/audio; falls back to synth if missing
+  // SFX player Â– uses folder assets/audio; falls back to synth if missing
   function playSound(type) {
     if (!sounds.enabled) return;
     if (!sounds.ext) loadAllAudio();
@@ -770,7 +784,7 @@
     }
   }
 
-  // Background music – loads from assets/audio/music/bg.(mp3|ogg|wav)
+  // Background music Â– loads from assets/audio/music/bg.(mp3|ogg|wav)
   function startMusic() {
     if (!sounds.musicEnabled) return;
     if (!sounds.ext) loadAllAudio();
@@ -839,6 +853,7 @@
   const ovMsg = document.getElementById('ovMsg');
   const startBtn = document.getElementById('startBtn');
   const howBtn = document.getElementById('howBtn');
+  const nukeBanner = document.getElementById('nukeBanner');
 
   const CENTER = () => ({x: canvas.width/2, y: canvas.height/2});
   const NEST_R = 10;
@@ -894,6 +909,7 @@
       elWave.textContent=state.wave; elSpeed.textContent=SPEEDS[state.speedIndex]+'x';
       chargeBar.style.width='0%'; nukeBtn.disabled=true;
     }
+    if (nukeBanner) nukeBanner.style.display='none';
     stopMusic();
   }
   reset();
@@ -1170,6 +1186,7 @@
       elSilk.textContent = Math.floor(state.silk);
     }
     state.nukeCharge = 0; state.nukeReady=false; chargeBar.style.width='0%'; nukeBtn.disabled=true;
+    if (nukeBanner) nukeBanner.style.display='none';
     state.shake = 15;
     playSound('nuke'); // Nuke explosion sound
 
@@ -1234,6 +1251,7 @@
       state.nukeReady=true; 
       nukeBtn.disabled=false;
       playSound('nukeCharged'); // Nuke charged sound
+      if (nukeBanner) nukeBanner.style.display='block';
     }
 
     const c = CENTER();
@@ -1489,7 +1507,7 @@
   function gameOver(){
     state.running=false; 
     overlay.style.display='grid';
-    ovTitle.textContent='[ GAME OVER ]';
+    ovTitle.textContent='GAME OVER';
     ovMsg.innerHTML = `FINAL SCORE: <b>${state.score}</b><br>WAVE: <b>${state.wave}</b><br><br>NEST DESTROYED`;
     startBtn.textContent='? RETRY';
     playSound('gameOver'); // Game over sound
@@ -1502,22 +1520,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
