@@ -13,7 +13,7 @@
   }
   
   :root{
-    --bg:#0c0602; --ink:#fff8f0; --muted:#ffd9aa;
+    --bg:#0c0602; --ink:#d6f0ff; --muted:#ffd9aa;
     --neon:#ff8c00; --ok:#ff8c00; --warn:#ffb84d; --bad:#cc5500;
     --grid:#2a1100;
   }
@@ -93,12 +93,15 @@
     .pill{font-size:.9em;padding:.2rem .4rem}
     .btn{font-size:.9em;padding:.22rem .48rem}
     .charge{width:60px;height:6px}
-    .soundToggle{bottom:8px;right:8px;font-size:.75em;padding:.18rem .4rem}
+    .soundToggle{font-size:.75em;padding:.18rem .4rem}
     footer{font-size:.85em;text-align:center}
   }
   }
   
   footer{justify-content:center;color:var(--ink);font-size:1em;user-select:none;}
+  .footerCenter{flex:1;text-align:center}
+  .ironSig{color:var(--muted);text-decoration:none;font-size:.95em}
+  .ironSig:hover{color:var(--ok);text-shadow:0 0 8px var(--ok)}
   
   .overlay{
     position:absolute;inset:0;display:none;place-items:center;
@@ -148,10 +151,11 @@
   }
   
   .soundToggle{
-    position:fixed;bottom:12px;right:12px;z-index:1001;
+    z-index:1;
     padding:.22rem .48rem;border:2px solid var(--ok);background:#000;
     color:var(--ok);font-family:'VT323',monospace;font-size:.85em;
     cursor:pointer;text-shadow:0 0 6px var(--ok);
+    margin-left:auto;
   }
   
   .soundToggle:hover{background:var(--ok);color:#000;}
@@ -165,13 +169,15 @@
   /* Nuke Ready Banner */
   .nukeBanner{
     position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);
-    padding:.4rem .8rem;border:4px solid var(--warn);background:#000;
-    color:var(--warn);text-shadow:0 0 10px var(--warn),0 0 20px var(--warn);
-    box-shadow:0 0 30px var(--warn), inset 0 0 14px #ffb84d40;
-    font-family:'Still Time','VT323',monospace;font-size:2.2em;letter-spacing:.1em;
+    padding:.4rem .8rem;border:4px solid #ff3366;background:#000;
+    color:#ff3366;text-shadow:0 0 10px #ff3366,0 0 20px #ff3366;
+    box-shadow:0 0 30px #ff3366, inset 0 0 14px #ff336640;
+    font-family:'Still Time','VT323',monospace;letter-spacing:.1em;
     z-index:1100;pointer-events:none;display:none;
-    animation:bannerFlash 0.9s steps(2, start) infinite;
+    animation:bannerFlash 0.7s steps(2, start) infinite;
   }
+  .nukeBanner .nbTitle{font-size:2.2em;line-height:1;margin-bottom:.1em}
+  .nukeBanner .nbHint{font-size:1.2em;line-height:1;color:#ff99aa}
   @keyframes bannerFlash{0%{opacity:1;filter:brightness(1.2)}50%{opacity:.3;filter:brightness(.9)}100%{opacity:1;filter:brightness(1.2)}}
 </style>
 </head>
@@ -196,20 +202,35 @@
   </header>
 
   <div id="gameContainer"><canvas id="game"></canvas></div>
-  <div id="nukeBanner" class="nukeBanner" aria-live="polite">NUKE 'EM HIGH!</div>
+  <div id="nukeBanner" class="nukeBanner" aria-live="polite">
+    <div class="nbTitle">NUKE 'EM HIGH!</div>
+    <div class="nbHint">[PRESS N]</div>
+  </div>
 
-  <footer>| CLICK TO DEPLOY WEB NODES | [R]ESTART | [N]UKE | [+]/[-]SPEED |</footer>
+  <footer>
+    <a class="ironSig" href="https://ironsignalworks.com" target="_blank" rel="noopener">IRON SIGNAL WORKS</a>
+    <span class="footerCenter">| CLICK TO DEPLOY WEB NODES | [R]ESTART | [N]UKE | [+]/[-]SPEED |</span>
+    <button id="soundToggle" class="soundToggle">SFX ON</button>
+  </footer>
+  
 
   <div id="overlay" class="overlay">
     <div class="card">
       <h2 id="ovTitle">SPIDER STRIKE</h2>
       <p id="ovMsg" class="small">
+        THE NEST IS UNDER ATTACK!<br>
         DEPLOY WEB NODES TO SLOW ENEMIES<br>
         NODES WEAR DOWN WITH TRAFFIC<br>
         ENEMIES DIE IF STUCK TOO LONG<br>
-        SOME RESIST WEBS - SOME RESIST NUKES
+        SOME RESIST WEBS - SOME RESIST NUKES<br>
+        <br>
+        <b>CONTROLS</b><br>
+        CLICK: DEPLOY WEB NODE<br>
+        R: RESTART RUN<br>
+        N: NUKE (WHEN CHARGED)<br>
+        + / -: CHANGE GAME SPEED
       </p>
-      <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
+      <div id="ovKeys" style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
         <span class="kbd">CLICK</span><span class="kbd">R</span><span class="kbd">N</span><span class="kbd">+</span><span class="kbd">-</span>
       </div>
       <div style="display:flex;gap:.6rem;justify-content:center">
@@ -220,7 +241,7 @@
   </div>
 </div>
 
-<button id="soundToggle" class="soundToggle">SFX ON</button>
+
 
 <script>
 (() => {
@@ -853,6 +874,7 @@
   const ovMsg = document.getElementById('ovMsg');
   const startBtn = document.getElementById('startBtn');
   const howBtn = document.getElementById('howBtn');
+  const ovKeys = document.getElementById('ovKeys');
   const nukeBanner = document.getElementById('nukeBanner');
 
   const CENTER = () => ({x: canvas.width/2, y: canvas.height/2});
@@ -990,7 +1012,7 @@
   });
 
   function showOverlay(title,msg,doReset=false){
-    ovTitle.textContent=title; ovMsg.innerHTML=msg; overlay.style.display='grid'; state.running=false; if (doReset) reset();
+    ovTitle.textContent=title; ovMsg.innerHTML=msg; overlay.style.display='grid'; state.running=false; if (ovKeys) ovKeys.style.display='flex'; if (doReset) reset();
   }
   
   function start(){
@@ -1510,6 +1532,7 @@
     ovTitle.textContent='GAME OVER';
     ovMsg.innerHTML = `FINAL SCORE: <b>${state.score}</b><br>WAVE: <b>${state.wave}</b><br><br>NEST DESTROYED`;
     startBtn.textContent='? RETRY';
+    if (ovKeys) ovKeys.style.display='none';
     playSound('gameOver'); // Game over sound
     stopMusic(); // Stop background music
   }
