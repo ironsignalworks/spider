@@ -231,9 +231,7 @@
         N: NUKE (WHEN CHARGED)<br>
         + / -: CHANGE GAME SPEED
       </p>
-      <div id="ovKeys" style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
-        <span class="kbd">CLICK</span><span class="kbd">R</span><span class="kbd">N</span><span class="kbd">+</span><span class="kbd">-</span>
-      </div>
+      
       <div style="display:flex;gap:.6rem;justify-content:center">
         <button id="startBtn" class="btn">START</button>
         <button id="howBtn" class="btn">INFO</button>
@@ -247,6 +245,7 @@
 <script>
 (() => {
   "use strict";
+  const DPR = (window.devicePixelRatio || 1);
   
   /*** SPIDER SPRITE ***/
   const SPIDER_SVG_DATAURI =
@@ -597,6 +596,49 @@
       Math.round(enemy.x - dw/2), Math.round(enemy.y - dh/2),
       Math.round(dw), Math.round(dh)
     );
+  }
+
+  /* ========================= 
+     BOSS SYSTEM (3 patterns)
+     ========================= */
+  const BossKind = { BROOD:'mother_brood', HARB:'harbinger', WIDOW:'black_widow_final' };
+  const bossHazards = { acidPools:[], shards:[], snares:[], shockwaves:[] };
+  const R = (a,b)=>a+Math.random()*(b-a);
+  function webDamagePerSecond(slowMult){ if (slowMult>=0.7) return 0; const t=(0.7-slowMult)/0.7; return 10*t; }
+  function sampleWebAt(x,y,dt,applyWear=true){ let slow=1; for(const n of state.nodes){ const dx=x-n.x, dy=y-n.y; const d=Math.hypot(dx,dy); if(d<n.r){ const t=1-(d/n.r); const s=1-(NODE_FADE+(NODE_SLOW-NODE_FADE)*t); slow*=s; if(applyWear){ n.dur -= NODE_DECAY_PER_ENEMY*(dt/1000)*(0.25+0.75*t);} } } return { slowMult: Math.min(1, Math.max(0.12, slow))}; }
+  function findNearestNode(x,y){ let best=null,bd=1e9; for(const n of state.nodes){ const d=Math.hypot(x-n.x,y-n.y); if(d<bd){bd=d; best=n;} } return best?{node:best,d:bd}:null; }
+  const BossDefs = {
+    [BossKind.BROOD]: { name:'Mother Brood', maxHp:900, speed:0.030*DPR, webResist:0.25, nukeMult:0.7,
+      attack:{ layLarvaeEvery:2200, dropAcidEvery:3500, acid:{ r:70*DPR, dps:18, life:6000 } } },
+    [BossKind.HARB]: { name:'The Harbinger', maxHp:750, speed:0.045*DPR, webResist:0.10, nukeMult:0.5,
+      attack:{ phaseEvery:5200, phaseDur:1800, shardEvery:900, shockEvery:5000, shardSpeed:0.35*DPR,
+        shock:{ expand:1.2*DPR, max: Math.max(640,480)*0.9, strength:12 } } },
+    [BossKind.WIDOW]: { name:'Black Widow — Final', maxHp:600, speed:0.060*DPR, webResist:0.0, nukeMult:1.0,
+      attack:{ dashEvery:2400, dashDur:350, dashBoost:2.6, snareEvery:1800, snare:{ r:90*DPR, disableMs:2000, life:2600 } } },
+  };
+  let boss = null;
+  function spawnBoss(kind){ const def=BossDefs[kind]; if(!def) return; const side=Math.floor(Math.random()*4); let x,y; if(side===0){x=Math.random()*canvas.width;y=-120*DPR;} else if(side===1){x=canvas.width+120*DPR;y=Math.random()*canvas.height;} else if(side===2){x=Math.random()*canvas.width;y=canvas.height+120*DPR;} else {x=-120*DPR;y=Math.random()*canvas.height;} boss = { kind, def, x,y, vx:0, vy:0, hp:def.maxHp, t:0, timers:{a:0,b:0,c:0,phase:0,dash:0}, ghost:false, snareLock:0, stuckDmg:0, lastHitNukeTick:0 } }
+  function damageBossFromNuke(){ if(!boss) return; const def=boss.def; if(boss.kind===BossKind.HARB && boss.ghost) return; const est=Math.max(1, Math.floor(state.enemies.length)); const dmg = 80*def.nukeMult + 6*est*def.nukeMult; applyBossDamage(dmg,'nuke'); }
+  function applyBossDamage(amount, source){ if(!boss) return; boss.hp=Math.max(0,boss.hp-amount); emitBurst(boss.x,boss.y, source==='nuke'?'#ff7880':'#ff2136', 18); if(boss.hp===0){ addScore(150); bossHazards.acidPools.length=0; bossHazards.shards.length=0; bossHazards.snares.length=0; bossHazards.shockwaves.length=0; state.silk=Math.min(SILK_MAX,state.silk+60); boss=null; } }
+  function updateBoss(dt){ if(!boss) return; const c={x:canvas.width/2,y:canvas.height/2}; boss.t+=dt; let { slowMult } = sampleWebAt(boss.x,boss.y,dt,true); slowMult = slowMult + (1-slowMult)*boss.def.webResist; const dps = webDamagePerSecond(slowMult); if(dps>0 && !(boss.kind===BossKind.HARB && boss.ghost)) applyBossDamage(dps*(dt/1000),'web'); let speed=boss.def.speed;
+    if(boss.kind===BossKind.HARB){ boss.timers.phase+=dt; boss.timers.a+=dt; boss.timers.b+=dt; boss.timers.c+=dt; if(!boss.ghost && boss.timers.phase>=boss.def.attack.phaseEvery){ boss.ghost=true; boss.timers.phase=0;} if(boss.ghost && boss.timers.phase>=boss.def.attack.phaseDur){ boss.ghost=false; boss.timers.phase=0;} if(boss.timers.a>=boss.def.attack.shardEvery){ boss.timers.a=0; const near=findNearestNode(boss.x,boss.y); const target=near?.node||c; const ang=Math.atan2(target.y-boss.y,target.x-boss.x)+R(-0.2,0.2); bossHazards.shards.push({x:boss.x,y:boss.y,vx:Math.cos(ang)*boss.def.attack.shardSpeed,vy:Math.sin(ang)*boss.def.attack.shardSpeed,life:0,max:3500}); } if(boss.timers.b>=boss.def.attack.shockEvery){ boss.timers.b=0; bossHazards.shockwaves.push({x:boss.x,y:boss.y,r:0,expand:boss.def.attack.shock.expand,life:0,max:900,strength:boss.def.attack.shock.strength}); } }
+    if(boss.kind===BossKind.BROOD){ boss.timers.a+=dt; boss.timers.b+=dt; if(boss.timers.a>=boss.def.attack.layLarvaeEvery){ boss.timers.a=0; for(let i=0;i<3;i++){ const ang=Math.random()*Math.PI*2; const rx=boss.x+Math.cos(ang)*40*DPR, ry=boss.y+Math.sin(ang)*40*DPR; state.enemies.push({ x:rx,y:ry, hp:12, speed:ENEMY_SPEED0*1.5*DPR, slow:1, stuckTimer:0, type:{key:'gnat',color:'#b1b7ff', webResist:0.0, nukeImmune:false, stuckMult:1.0} }); } } if(boss.timers.b>=boss.def.attack.dropAcidEvery){ boss.timers.b=0; bossHazards.acidPools.push({ x:boss.x+R(-40,40)*DPR, y:boss.y+R(-40,40)*DPR, r:boss.def.attack.acid.r, dps:boss.def.attack.acid.dps, life:0, max:boss.def.attack.acid.life }); } }
+    if(boss.kind===BossKind.WIDOW){ boss.timers.a+=dt; boss.timers.b+=dt; boss.timers.dash+=dt; let dashBoost=1; if(boss.timers.dash>=boss.def.attack.dashEvery){ boss.timers.dash=0; boss.timers.c=0; } if(boss.timers.c<boss.def.attack.dashDur){ boss.timers.c+=dt; dashBoost=boss.def.attack.dashBoost; } if(boss.timers.b>=boss.def.attack.snareEvery){ boss.timers.b=0; bossHazards.snares.push({ x:boss.x+R(-20,20)*DPR, y:boss.y+R(-20,20)*DPR, r:boss.def.attack.snare.r, disableMs:boss.def.attack.snare.disableMs, life:0, max:boss.def.attack.snare.life }); } speed*=dashBoost; }
+    const moveSlow = (boss.kind===BossKind.HARB && boss.ghost)?1:slowMult; const vx=c.x-boss.x, vy=c.y-boss.y; const dist=Math.hypot(vx,vy)||1; const ux=vx/dist, uy=vy/dist; const step=speed*moveSlow*dt; boss.x+=ux*step; boss.y+=uy*step; if(dist<=NEST_R+6*DPR){ damage(2); boss.x-=ux*40*DPR; boss.y-=uy*40*DPR; }
+    updateBossHazards(dt);
+  }
+  function updateBossHazards(dt){ for(let i=bossHazards.acidPools.length-1;i>=0;i--){ const a=bossHazards.acidPools[i]; a.life+=dt; for(const n of state.nodes){ const d=Math.hypot(a.x-n.x, a.y-n.y); if(d<a.r){ n.dur -= a.dps*(dt/1000); } } if(a.life>=a.max) bossHazards.acidPools.splice(i,1); }
+    for(let i=bossHazards.shards.length-1;i>=0;i--){ const s=bossHazards.shards[i]; s.life+=dt; s.x+=s.vx*dt; s.y+=s.vy*dt; const near=findNearestNode(s.x,s.y); if(near && near.d<18*DPR){ near.node.dur-=35; emitBurst(s.x,s.y,'#39ffd1',10); bossHazards.shards.splice(i,1); continue; } const dc=Math.hypot(s.x-canvas.width/2,s.y-canvas.height/2); if(dc<NEST_R){ damage(1); bossHazards.shards.splice(i,1); continue;} if(s.life>=s.max) bossHazards.shards.splice(i,1); }
+    for(let i=bossHazards.snares.length-1;i>=0;i--){ const sn=bossHazards.snares[i]; sn.life+=dt; for(const n of state.nodes){ const d=Math.hypot(sn.x-n.x, sn.y-n.y); if(d<sn.r){ if(!n._snareLeft) n._snareLeft=sn.disableMs; n._snareLeft = Math.max(n._snareLeft, sn.disableMs); } } if(sn.life>=sn.max) bossHazards.snares.splice(i,1); }
+    for(let i=bossHazards.shockwaves.length-1;i>=0;i--){ const w=bossHazards.shockwaves[i]; w.life+=dt; w.r+=w.expand*dt; for(const n of state.nodes){ const d=Math.hypot(w.x-n.x, w.y-n.y); if(Math.abs(d-w.r)<16*DPR){ n.dur -= w.strength*(dt/1000)*50; } } if(w.r>w.max || w.life>=w.max) bossHazards.shockwaves.splice(i,1); }
+    for(const n of state.nodes){ if(n._snareLeft && n._snareLeft>0){ n._snareLeft-=dt; n._origR=n._origR||n.r; n.r = Math.max(8*DPR, n._origR*0.12); if(n._snareLeft<=0){ n.r=n._origR||n.r; n._origR=null; n._snareLeft=0; } } }
+  }
+  function drawBoss(ctx){ if(!boss) return; if(boss.kind===BossKind.WIDOW){ stepBossWidowAnim(performance.now()); drawBossWidow(ctx, boss.x, boss.y, 0.95); } else { ctx.save(); ctx.fillStyle='#0b0c0f'; ctx.strokeStyle='#e6001a'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(boss.x, boss.y, 22, 16, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    const pct=boss.hp/boss.def.maxHp; const w=140*DPR, h=8*DPR, x=boss.x-w/2, y=boss.y-70*DPR; ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(x,y,w,h); ctx.fillStyle = pct>0.5?'rgba(61,255,122,0.9)' : (pct>0.25?'rgba(255,216,74,0.95)':'rgba(255,77,77,0.95)'); ctx.fillRect(x,y,w*pct,h); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h);
+    for(const a of bossHazards.acidPools){ const g=ctx.createRadialGradient(a.x,a.y,0,a.x,a.y,a.r); g.addColorStop(0,'rgba(0,255,140,0.22)'); g.addColorStop(1,'rgba(0,255,140,0.04)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fill(); }
+    for(const s of bossHazards.shards){ ctx.strokeStyle='rgba(57,255,209,0.95)'; ctx.lineWidth=2*DPR; ctx.beginPath(); ctx.moveTo(s.x-4*DPR,s.y); ctx.lineTo(s.x+4*DPR,s.y); ctx.stroke(); }
+    for(const sn of bossHazards.snares){ ctx.strokeStyle='rgba(255,33,54,0.7)'; ctx.lineWidth=2*DPR; ctx.beginPath(); ctx.arc(sn.x,sn.y,sn.r,0,Math.PI*2); ctx.stroke(); }
+    for(const wv of bossHazards.shockwaves){ ctx.strokeStyle='rgba(57,255,209,0.5)'; ctx.lineWidth=3*DPR; ctx.beginPath(); ctx.arc(wv.x,wv.y,wv.r,0,Math.PI*2); ctx.stroke(); }
   }
 
   // Boss sprite sheet (embedded SVG, two frames side-by-side 128x96)
@@ -953,7 +995,7 @@
   const ovMsg = document.getElementById('ovMsg');
   const startBtn = document.getElementById('startBtn');
   const howBtn = document.getElementById('howBtn');
-  const ovKeys = document.getElementById('ovKeys');
+  
   const nukeBanner = document.getElementById('nukeBanner');
 
   const CENTER = () => ({x: canvas.width/2, y: canvas.height/2});
@@ -1006,7 +1048,6 @@
     state.speedIndex=0; state.score=0; state.lives=START_LIVES; state.silk=START_SILK;
     state.wave=1; state.inWave=false; state.nextWaveAt=0; state.toSpawn=0; state.spawnTimer=0;
     state.enemies.length=0; state.nodes.length=0; state.particles.length=0; state.shots.length=0; state.powerups.length=0; state.powerupTimer=0; state.shake=0;
-    state.boss = null;
     state.nukeCharge=0; state.nukeReady=false; state.spiderFlash=0;
     if (full){
       elScore.textContent=state.score; elLives.textContent=state.lives;
@@ -1095,7 +1136,7 @@
   });
 
   function showOverlay(title,msg,doReset=false){
-    ovTitle.textContent=title; ovMsg.innerHTML=msg; overlay.style.display='grid'; state.running=false; if (ovKeys) ovKeys.style.display='flex'; if (doReset) reset();
+    ovTitle.textContent=title; ovMsg.innerHTML=msg; overlay.style.display='grid'; state.running=false; if (doReset) reset();
   }
   
   function start(){
@@ -1116,16 +1157,7 @@
     playSound('waveStart'); // Wave start sound
   }
 
-  function spawnBoss(){
-    const side = Math.floor(Math.random()*4); let x,y;
-    if (side===0){x=Math.random()*canvas.width; y=-20;}
-    else if (side===1){x=canvas.width+20; y=Math.random()*canvas.height;}
-    else if (side===2){x=Math.random()*canvas.width; y=canvas.height+20;}
-    else {x=-20; y=Math.random()*canvas.height;}
-    state.boss = { x, y, vx:0, vy:0, stuckTimer:0 };
-    // Delay next wave until boss is defeated
-    state.nextWaveAt = Number.POSITIVE_INFINITY;
-  }
+  // (old boss removed)
   
   function spawnEnemy(){
     const side = Math.floor(Math.random()*4); let x,y;
@@ -1301,6 +1333,8 @@
       state.silk = Math.min(SILK_MAX, state.silk + killed * NUKE_SILK_PER_KILL);
       elSilk.textContent = Math.floor(state.silk);
     }
+    // Hurt boss if present
+    damageBossFromNuke();
     state.nukeCharge = 0; state.nukeReady=false; chargeBar.style.width='0%'; nukeBtn.disabled=true;
     if (nukeBanner) nukeBanner.style.display='none';
     state.shake = 15;
@@ -1345,15 +1379,14 @@
       state.inWave=false; 
       state.wave++; 
       elWave.textContent=state.wave; 
+      state.nextWaveAt = state.t + WAVE_GAP_MS;
       state.silk = Math.min(SILK_MAX, state.silk + 20 + 5*state.wave);
       state.nukeCharge = Math.min(NUKE_CHARGE_MAX, state.nukeCharge + 28);
       playSound('waveComplete'); // Wave complete sound
-      if (state.wave % 3 === 0) {
-        spawnBoss();
-      } else {
-        state.nextWaveAt = state.t + WAVE_GAP_MS;
-        if (Math.random() < POWERUP_CHANCE) spawnPowerup();
-      }
+      if (Math.random() < POWERUP_CHANCE) spawnPowerup();
+      if (state.wave === 5)  spawnBoss(BossKind.BROOD);
+      if (state.wave === 9)  spawnBoss(BossKind.HARB);
+      if (state.wave === 12) spawnBoss(BossKind.WIDOW);
     }
 
     // Frequent powerup spawns while running
@@ -1420,41 +1453,8 @@
       }
     }
 
-    // Boss update
-    if (state.boss) {
-      let slow = 1, heavySlow = false;
-      for (const n of state.nodes){
-        const dx=state.boss.x-n.x, dy=state.boss.y-n.y; const d=Math.hypot(dx,dy);
-        if (d < n.r){
-          const t = 1 - (d/n.r);
-          const s = 1 - (NODE_FADE + (NODE_SLOW - NODE_FADE) * t);
-          slow *= s;
-          if (t > 0.55) heavySlow = true;
-          n.dur -= NODE_DECAY_PER_ENEMY * 1.25 * (dt/1000) * (0.35 + 0.65*t); // boss strains webs
-        }
-      }
-      slow = Math.min(1, Math.max(0.08, slow));
-      const need = STUCK_KILL_MS * BOSS_STUCK_MULT;
-      if (slow < 0.70 && heavySlow) state.boss.stuckTimer = (state.boss.stuckTimer||0) + dt; else state.boss.stuckTimer = Math.max(0,(state.boss.stuckTimer||0) - dt*1.2);
-      if (state.boss.stuckTimer >= need){
-        emitBurst(state.boss.x, state.boss.y, '#ff2136', 36);
-        addScore(BOSS_SCORE, state.boss.x, state.boss.y);
-        state.silk = Math.min(SILK_MAX, state.silk + BOSS_SILK); elSilk.textContent=Math.floor(state.silk);
-        state.shake = 8;
-        state.boss = null;
-        state.nextWaveAt = state.t + WAVE_GAP_MS; // resume waves
-      } else {
-        const dx = c.x - state.boss.x, dy = c.y - state.boss.y; const dist = Math.hypot(dx,dy)||1;
-        const ux = dx / dist, uy = dy / dist;
-        const desired = BOSS_SPEED * slow;
-        const alpha = 1 - Math.exp(-dt * 0.02);
-        state.boss.vx = (state.boss.vx||0) + (ux*desired - (state.boss.vx||0)) * alpha;
-        state.boss.vy = (state.boss.vy||0) + (uy*desired - (state.boss.vy||0)) * alpha;
-        state.boss.x += state.boss.vx * dt; state.boss.y += state.boss.vy * dt;
-        const nd = Math.hypot(c.x - state.boss.x, c.y - state.boss.y);
-        if (nd <= NEST_R){ state.boss = null; damage(BOSS_DAMAGE); state.nextWaveAt = state.t + WAVE_GAP_MS; }
-      }
-    }
+    // Boss update (new system)
+    updateBoss(dt);
 
     for (let i=state.nodes.length-1;i>=0;i--){if (state.nodes[i].dur <= 0) state.nodes.splice(i,1);}
 
@@ -1588,17 +1588,8 @@
       }
     }
 
-    // Draw boss
-    if (state.boss) {
-      stepBossWidowAnim(performance.now());
-      drawBossWidow(ctx, state.boss.x, state.boss.y, 0.7);
-      if (state.boss.stuckTimer && state.boss.stuckTimer > 0) {
-        const need = STUCK_KILL_MS * BOSS_STUCK_MULT;
-        const p = Math.min(1, state.boss.stuckTimer / need);
-        const ring = Math.floor(10 + p * 6);
-        drawPixelCircle(state.boss.x, state.boss.y, ring, '#ff2136', true);
-      }
-    }
+    // Draw boss (new system):
+    drawBoss(ctx);
 
     // Nest - chunky pixel art - ALWAYS IN CENTER
     // Remove outer circle glow - only keep nest body and outline
@@ -1675,10 +1666,9 @@
   function gameOver(){
     state.running=false; 
     overlay.style.display='grid';
-    ovTitle.textContent='GAME OVER';
+    ovTitle.textContent='[ GAME OVER ]';
     ovMsg.innerHTML = `FINAL SCORE: <b>${state.score}</b><br>WAVE: <b>${state.wave}</b><br><br>NEST DESTROYED`;
     startBtn.textContent='? RETRY';
-    if (ovKeys) ovKeys.style.display='none';
     playSound('gameOver'); // Game over sound
     stopMusic(); // Stop background music
   }
