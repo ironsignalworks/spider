@@ -617,10 +617,23 @@
       attack:{ dashEvery:2400, dashDur:350, dashBoost:2.6, snareEvery:1800, snare:{ r:90*DPR, disableMs:2000, life:2600 } } },
   };
   let boss = null;
-  function spawnBoss(kind){ const def=BossDefs[kind]; if(!def) return; const side=Math.floor(Math.random()*4); let x,y; if(side===0){x=Math.random()*canvas.width;y=-120*DPR;} else if(side===1){x=canvas.width+120*DPR;y=Math.random()*canvas.height;} else if(side===2){x=Math.random()*canvas.width;y=canvas.height+120*DPR;} else {x=-120*DPR;y=Math.random()*canvas.height;} boss = { kind, def, x,y, vx:0, vy:0, hp:def.maxHp, t:0, timers:{a:0,b:0,c:0,phase:0,dash:0}, ghost:false, snareLock:0, stuckDmg:0, lastHitNukeTick:0 } }
+  function spawnBoss(kind){ const def=BossDefs[kind]; if(!def) return; const side=Math.floor(Math.random()*4); let x,y; if(side===0){x=Math.random()*canvas.width;y=-120*DPR;} else if(side===1){x=canvas.width+120*DPR;y=Math.random()*canvas.height;} else if(side===2){x=Math.random()*canvas.width;y=canvas.height+120*DPR;} else {x=-120*DPR;y=Math.random()*canvas.height;} boss = { kind, def, x,y, vx:0, vy:0, hp:def.maxHp, t:0, timers:{a:0,b:0,c:0,phase:0,dash:0}, ghost:false, snareLock:0, stuckDmg:0, lastHitNukeTick:0 }; if (sounds.musicEnabled) startBossMusic(); }
   function damageBossFromNuke(){ if(!boss) return; const def=boss.def; if(boss.kind===BossKind.HARB && boss.ghost) return; const est=Math.max(1, Math.floor(state.enemies.length)); const dmg = 80*def.nukeMult + 6*est*def.nukeMult; applyBossDamage(dmg,'nuke'); }
-  function applyBossDamage(amount, source){ if(!boss) return; boss.hp=Math.max(0,boss.hp-amount); emitBurst(boss.x,boss.y, source==='nuke'?'#ff7880':'#ff2136', 18); if(boss.hp===0){ addScore(150); bossHazards.acidPools.length=0; bossHazards.shards.length=0; bossHazards.snares.length=0; bossHazards.shockwaves.length=0; state.silk=Math.min(SILK_MAX,state.silk+60); boss=null; } }
-  function updateBoss(dt){ if(!boss) return; const c={x:canvas.width/2,y:canvas.height/2}; boss.t+=dt; let { slowMult } = sampleWebAt(boss.x,boss.y,dt,true); slowMult = slowMult + (1-slowMult)*boss.def.webResist; const dps = webDamagePerSecond(slowMult); if(dps>0 && !(boss.kind===BossKind.HARB && boss.ghost)) applyBossDamage(dps*(dt/1000),'web'); let speed=boss.def.speed;
+  function applyBossDamage(amount, source){
+  if (!boss) return;
+  boss.hp = Math.max(0, boss.hp - amount);
+  emitBurst(boss.x, boss.y, source==='nuke' ? '#ff7880' : '#ff2136', 18);
+  if (boss.hp === 0){
+    addScore(150);
+    bossHazards.acidPools.length=0;
+    bossHazards.shards.length=0;
+    bossHazards.snares.length=0;
+    bossHazards.shockwaves.length=0;
+    state.silk = Math.min(SILK_MAX, state.silk + 60);
+    boss = null;
+    if (state.running && sounds.musicEnabled) startMusic();
+  }
+}function updateBoss(dt){ if(!boss) return; const c={x:canvas.width/2,y:canvas.height/2}; boss.t+=dt; let { slowMult } = sampleWebAt(boss.x,boss.y,dt,true); slowMult = slowMult + (1-slowMult)*boss.def.webResist; const dps = webDamagePerSecond(slowMult); if(dps>0 && !(boss.kind===BossKind.HARB && boss.ghost)) applyBossDamage(dps*(dt/1000),'web'); let speed=boss.def.speed;
     if(boss.kind===BossKind.HARB){ boss.timers.phase+=dt; boss.timers.a+=dt; boss.timers.b+=dt; boss.timers.c+=dt; if(!boss.ghost && boss.timers.phase>=boss.def.attack.phaseEvery){ boss.ghost=true; boss.timers.phase=0;} if(boss.ghost && boss.timers.phase>=boss.def.attack.phaseDur){ boss.ghost=false; boss.timers.phase=0;} if(boss.timers.a>=boss.def.attack.shardEvery){ boss.timers.a=0; const near=findNearestNode(boss.x,boss.y); const target=near?.node||c; const ang=Math.atan2(target.y-boss.y,target.x-boss.x)+R(-0.2,0.2); bossHazards.shards.push({x:boss.x,y:boss.y,vx:Math.cos(ang)*boss.def.attack.shardSpeed,vy:Math.sin(ang)*boss.def.attack.shardSpeed,life:0,max:3500}); } if(boss.timers.b>=boss.def.attack.shockEvery){ boss.timers.b=0; bossHazards.shockwaves.push({x:boss.x,y:boss.y,r:0,expand:boss.def.attack.shock.expand,life:0,max:900,strength:boss.def.attack.shock.strength}); } }
     if(boss.kind===BossKind.BROOD){ boss.timers.a+=dt; boss.timers.b+=dt; if(boss.timers.a>=boss.def.attack.layLarvaeEvery){ boss.timers.a=0; for(let i=0;i<3;i++){ const ang=Math.random()*Math.PI*2; const rx=boss.x+Math.cos(ang)*40*DPR, ry=boss.y+Math.sin(ang)*40*DPR; state.enemies.push({ x:rx,y:ry, hp:12, speed:ENEMY_SPEED0*1.5*DPR, slow:1, stuckTimer:0, type:{key:'gnat',color:'#b1b7ff', webResist:0.0, nukeImmune:false, stuckMult:1.0} }); } } if(boss.timers.b>=boss.def.attack.dropAcidEvery){ boss.timers.b=0; bossHazards.acidPools.push({ x:boss.x+R(-40,40)*DPR, y:boss.y+R(-40,40)*DPR, r:boss.def.attack.acid.r, dps:boss.def.attack.acid.dps, life:0, max:boss.def.attack.acid.life }); } }
     if(boss.kind===BossKind.WIDOW){ boss.timers.a+=dt; boss.timers.b+=dt; boss.timers.dash+=dt; let dashBoost=1; if(boss.timers.dash>=boss.def.attack.dashEvery){ boss.timers.dash=0; boss.timers.c=0; } if(boss.timers.c<boss.def.attack.dashDur){ boss.timers.c+=dt; dashBoost=boss.def.attack.dashBoost; } if(boss.timers.b>=boss.def.attack.snareEvery){ boss.timers.b=0; bossHazards.snares.push({ x:boss.x+R(-20,20)*DPR, y:boss.y+R(-20,20)*DPR, r:boss.def.attack.snare.r, disableMs:boss.def.attack.snare.disableMs, life:0, max:boss.def.attack.snare.life }); } speed*=dashBoost; }
@@ -927,19 +940,23 @@
   }
 
   // Background music  loads from assets/audio/music/bg.(mp3|ogg|wav)
-  function startMusic() {
-    if (!sounds.musicEnabled) return;
-    if (!sounds.ext) loadAllAudio();
-    if (!sounds.music) {
-      sounds.music = new Audio(MUSIC_PATH + 'bg' + (sounds.ext || '.mp3'));
-      sounds.music.loop = true;
-      sounds.music.volume = 0.25;
-    }
-    try{ sounds.music.play(); }catch(e){}
-    sounds.musicNode = sounds.music;
-  }
-
-  function stopMusic() {
+  // Background music helpers
+function playMusic(track){
+  if (!sounds.musicEnabled) return;
+  if (!sounds.ext) loadAllAudio();
+  if (!sounds.music) sounds.music = new Audio();
+  try{ sounds.music.pause(); }catch(e){}
+  const src = MUSIC_PATH + track + (sounds.ext || '.mp3');
+  sounds.music.src = src;
+  sounds.music.loop = true;
+  sounds.music.volume = track === 'boss' ? 0.28 : 0.25;
+  // Fallback to bg if boss track missing
+  sounds.music.onerror = () => { if (track !== 'bg') { sounds.music.onerror = null; playMusic('bg'); } };
+  try{ sounds.music.play(); }catch(e){}
+  sounds.musicNode = sounds.music;
+}
+function startMusic(){ playMusic('bg'); }
+function startBossMusic(){ playMusic('boss'); }function stopMusic() {
     if (sounds.music) { try{ sounds.music.pause(); sounds.music.currentTime = 0; }catch(e){} }
     sounds.musicNode = null;
   }
@@ -950,9 +967,7 @@
     sounds.enabled = !sounds.enabled;
     sounds.musicEnabled = !sounds.musicEnabled;
     soundToggle.textContent = sounds.enabled ? 'SFX ON' : 'SFX OFF';
-    if (sounds.musicEnabled && state.running) {
-      startMusic();
-    } else {
+    if (sounds.musicEnabled && state.running) { if (typeof boss !== 'undefined' && boss) startBossMusic(); else startMusic(); } else {
       stopMusic();
     }
     playSound('button');
@@ -1679,3 +1694,10 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
